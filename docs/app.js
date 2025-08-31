@@ -201,7 +201,8 @@ function addAssignment(){
   const a = {
     id: uid(),
     name: 'Nytt moment',
-    gradingByStage: { 'F-3':'FORBJUDET', '4-6':'ALLOWED_LIMITED', '7-9':'OBLIGATORISKT' }
+    stage: STAGES[0].key,
+    grade: GRADES[0].key
   };
   assignments.push(a); renderAssignments(); renderPreview();
 }
@@ -216,8 +217,8 @@ function renderAssignments(){
   let list = [...assignments];
   if(stageSort){
     list.sort((a,b)=>{
-      const ai = GRADE_ORDER[a.gradingByStage[stageSort]] ?? -1;
-      const bi = GRADE_ORDER[b.gradingByStage[stageSort]] ?? -1;
+      const ai = a.stage===stageSort ? GRADE_ORDER[a.grade] ?? -1 : Infinity;
+      const bi = b.stage===stageSort ? GRADE_ORDER[b.grade] ?? -1 : Infinity;
       return ai - bi;
     });
   }
@@ -226,32 +227,26 @@ function renderAssignments(){
     wrap.innerHTML = `
       <div class="row">
         <input value="${escapeAttr(a.name)}"/>
+        <select data-stage="${a.id}">
+          ${STAGES.map(s=>`<option value="${s.key}" ${a.stage===s.key?'selected':''}>${s.label}</option>`).join('')}
+        </select>
         <button data-del="${a.id}">Ta bort</button>
       </div>
-      <table class="tbl">
-        <thead><tr><th>Stadie</th><th>Gradering</th></tr></thead>
-        <tbody>
-          ${STAGES.map(s=>`
-            <tr>
-              <td>${s.label}</td>
-              <td>
-                ${GRADES.map(g=>`
-                  <span class="badge ${a.gradingByStage[s.key]===g.key?'selected':''}"
-                        data-set="${a.id}|${s.key}|${g.key}">${g.icon} ${g.label}</span>
-                `).join(' ')}
-              </td>
-            </tr>`).join('')}
-        </tbody>
-      </table>
+      <div class="row">
+        ${GRADES.map(g=>`
+          <span class="badge ${a.grade===g.key?'selected':''}" data-set="${a.id}|${g.key}">${g.icon} ${g.label}</span>
+        `).join(' ')}
+      </div>
     `;
     host.appendChild(wrap);
 
     wrap.querySelector('input').addEventListener('input', ev=>{ a.name = ev.target.value; renderPreview(); });
     wrap.querySelector(`[data-del="${a.id}"]`).addEventListener('click', ()=>{ assignments = assignments.filter(x=>x.id!==a.id); renderAssignments(); renderPreview(); });
+    wrap.querySelector(`select[data-stage="${a.id}"]`).addEventListener('change', ev=>{ a.stage = ev.target.value; renderAssignments(); renderPreview(); });
     wrap.querySelectorAll('[data-set]').forEach(el=>{
       el.addEventListener('click', ()=>{
-        const [id,stage,grade] = el.getAttribute('data-set').split('|');
-        if(id===a.id){ a.gradingByStage[stage]=grade; renderAssignments(); renderPreview(); }
+        const [id,grade] = el.getAttribute('data-set').split('|');
+        if(id===a.id){ a.grade=grade; renderAssignments(); renderPreview(); }
       });
     });
   });
@@ -270,17 +265,16 @@ function renderPreview(){
   let list = [...assignments];
   if(stageSort){
     list.sort((a,b)=>{
-      const ai = GRADE_ORDER[a.gradingByStage[stageSort]] ?? -1;
-      const bi = GRADE_ORDER[b.gradingByStage[stageSort]] ?? -1;
+      const ai = a.stage===stageSort ? GRADE_ORDER[a.grade] ?? -1 : Infinity;
+      const bi = b.stage===stageSort ? GRADE_ORDER[b.grade] ?? -1 : Infinity;
       return ai - bi;
     });
   }
   list.forEach((a,i)=>{
+    const stageLabel = STAGES.find(s=>s.key===a.stage)?.label || a.stage;
+    const g = GRADES.find(x=>x.key===a.grade);
     out.push(`\n## ${i+1}. ${a.name}`);
-    STAGES.forEach(s=>{
-      const g = GRADES.find(x=>x.key===a.gradingByStage[s.key]);
-      out.push(`- ${s.label}: ${g.icon} ${g.label}`);
-    });
+    out.push(`- ${stageLabel}: ${g.icon} ${g.label}`);
   });
   box.textContent = out.join('\n');
 }
