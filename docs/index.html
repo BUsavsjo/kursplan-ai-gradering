@@ -5,17 +5,20 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Kursplan → Text (med AIAS-markering)</title>
   <style>
-    body{font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;margin:0;background:#fafafa;color:#222}
-    header{padding:14px 16px;background:#fff;border-bottom:1px solid #eee;position:sticky;top:0}
+    :root{--bg:#fafafa;--fg:#222;--muted:#666;--card:#fff;--border:#eee}
+    body{font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;margin:0;background:var(--bg);color:var(--fg)}
+    header{padding:14px 16px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0}
     .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
     select,button,input[type="text"]{padding:8px 10px;border:1px solid #ddd;border-radius:8px;background:#fff}
     button{cursor:pointer}
     main{padding:16px;max-width:1100px;margin:0 auto}
-    textarea{width:100%;min-height:60vh;border:1px solid #ddd;border-radius:10px;padding:12px;background:#fff;font-family:ui-monospace,monospace}
-    .muted{color:#666}
+    .muted{color:var(--muted)}
     .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
     footer{padding:16px;color:#555}
-    .badge{display:inline-block;border:1px solid #eee;border-radius:999px;padding:2px 8px;background:#fff}
+    .badge{display:inline-block;border:1px solid var(--border);border-radius:999px;padding:2px 8px;background:#fff}
+    /* Läs-vy */
+    .output{background:var(--card);border:1px solid #ddd;border-radius:10px;padding:16px;white-space:pre-wrap;word-wrap:break-word}
+    .output:focus{outline:2px solid #a3d2ff}
   </style>
 </head>
 <body>
@@ -50,8 +53,11 @@
       <button id="btnDownload">Ladda ner TXT</button>
       <button id="btnShare">Dela…</button>
     </div>
-    <textarea id="mdOut" spellcheck="false" aria-label="Kursplan som text"></textarea>
-    <p class="muted">Tips: klistra texten i kurs-PM, Teams/Google Classroom eller dela via knappen “Dela…”.</p>
+
+    <!-- Läs-vy: ej redigerbar, bevarar radbrytningar -->
+    <pre id="mdOut" class="output" aria-label="Kursplan som text" tabindex="0"></pre>
+
+    <p class="muted">Tips: kopiera texten till kurs-PM/Teams/Google Classroom, eller använd “Ladda ner TXT”.</p>
   </main>
 
   <footer>
