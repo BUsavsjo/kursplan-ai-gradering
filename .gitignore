@@ -1,0 +1,6 @@
+
+# Ignorera node_modules och byggfiler
+node_modules/
+dist/
+data/**
+!data/**/.gitkeep
