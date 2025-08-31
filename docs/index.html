@@ -49,11 +49,21 @@
         <h3 id="subjectTitle">Ämnesöversikt</h3>
         <div id="subjectPurpose"></div>
         <div class="block">
-          <h4>Centralt innehåll</h4>
+          <h4 id="ccTitle">Centralt innehåll</h4>
+          <div class="row tiny">
+            <label>Stadie:
+              <select id="ccStageFilter">
+                <option value="">Alla</option>
+                <option value="1-3">Lågstadiet (1–3)</option>
+                <option value="4-6">Mellanstadiet (4–6)</option>
+                <option value="7-9">Högstadiet (7–9)</option>
+              </select>
+            </label>
+          </div>
           <ul id="ccList" class="list"></ul>
         </div>
         <div class="block">
-          <h4>Kunskapskrav</h4>
+          <h4 id="krTitle">Kunskapskrav</h4>
           <ul id="krList" class="list"></ul>
         </div>
       </div>

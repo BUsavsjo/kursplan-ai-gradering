@@ -6,6 +6,8 @@ const GRADES = [
   {key:'TILLATET',label:'Tillåtet',icon:'✅'},
   {key:'OBLIGATORISKT',label:'Obligatoriskt',icon:'📌'}
 ];
+const CC_STAGE_LABELS = { '1-3':'lågstadiet', '4-6':'mellanstadiet', '7-9':'högstadiet' };
+const FILTER_TO_STAGE_KEY = { '1-3':'F-3', '4-6':'4-6', '7-9':'7-9' };
 
 // ---- State ----
 let subjectsIndex = [];
@@ -30,6 +32,7 @@ async function init(){
   $('#btnExportJSON').addEventListener('click', exportJSON);
   $('#btnExportMD').addEventListener('click', exportMD);
   $('#btnAdd').addEventListener('click', addAssignment);
+  $('#ccStageFilter').addEventListener('change', renderAll);
 
   // ladda ämneslista lokalt
   await loadIndex();
@@ -157,15 +160,32 @@ function renderSubject(){
   $('#subjectPurpose').innerHTML = currentSubject?.purpose
     ? `<div class="block"><h4>Syfte</h4><div>${currentSubject.purpose}</div></div>` : '';
 
+  const stageFilter = $('#ccStageFilter')?.value || '';
+  const ccTitle = stageFilter && CC_STAGE_LABELS[stageFilter]
+    ? `Centralt innehåll för ${CC_STAGE_LABELS[stageFilter]}`
+    : 'Centralt innehåll';
+  $('#ccTitle').textContent = ccTitle;
+
   const cc = $('#ccList'); cc.innerHTML = '';
+  const knownStageIds = Object.keys(CC_STAGE_LABELS);
   (currentSubject?.centralContent || []).forEach(c=>{
+    const isStage = knownStageIds.includes(c.id);
+    if(stageFilter && isStage && c.id !== stageFilter) return;
     const li = document.createElement('li');
     li.innerHTML = `<span class="badge">${c.id}</span> ${c.text}`;
     cc.appendChild(li);
   });
 
+  const krTitle = stageFilter && CC_STAGE_LABELS[stageFilter]
+    ? `Kunskapskrav för ${CC_STAGE_LABELS[stageFilter]}`
+    : 'Kunskapskrav';
+  $('#krTitle').textContent = krTitle;
+
   const kr = $('#krList'); kr.innerHTML = '';
   Object.entries(currentSubject?.knowledgeRequirements || {}).forEach(([k,v])=>{
+    const stagePart = k.split(' · ')[0];
+    const isStage = knownStageIds.includes(stagePart);
+    if(stageFilter && isStage && stagePart !== stageFilter) return;
     const li = document.createElement('li');
     li.innerHTML = `<span class="badge">${k}</span> ${v}`;
     kr.appendChild(li);
@@ -182,6 +202,10 @@ function addAssignment(){
 }
 
 function renderAssignments(){
+  const stageFilter = $('#ccStageFilter')?.value || '';
+  const stageKey = FILTER_TO_STAGE_KEY[stageFilter] || stageFilter;
+  const visibleStages = STAGES.filter(s=>!stageFilter || s.key === stageKey);
+
   const host = $('#assignments'); host.innerHTML = '';
   if(assignments.length===0){
     host.innerHTML = '<div class="muted tiny">Inga moment ännu. Klicka ”Nytt moment”.</div>';
@@ -197,7 +221,7 @@ function renderAssignments(){
       <table class="tbl">
         <thead><tr><th>Stadie</th><th>Gradering</th></tr></thead>
         <tbody>
-          ${STAGES.map(s=>`
+          ${visibleStages.map(s=>`
             <tr>
               <td>${s.label}</td>
               <td>
@@ -224,6 +248,10 @@ function renderAssignments(){
 }
 
 function renderPreview(){
+  const stageFilter = $('#ccStageFilter')?.value || '';
+  const stageKey = FILTER_TO_STAGE_KEY[stageFilter] || stageFilter;
+  const visibleStages = STAGES.filter(s=>!stageFilter || s.key === stageKey);
+
   const box = $('#preview');
   if(assignments.length===0){
     box.textContent = 'Lägg till ett moment och sätt gradering per stadie.';
@@ -234,7 +262,7 @@ function renderPreview(){
   const out = [`# ${currentSubject?.title || 'Ämne'} – AI-gradering per stadie`];
   assignments.forEach((a,i)=>{
     out.push(`\n## ${i+1}. ${a.name}`);
-    STAGES.forEach(s=>{
+    visibleStages.forEach(s=>{
       const g = GRADES.find(x=>x.key===a.gradingByStage[s.key]);
       out.push(`- ${s.label}: ${g.icon} ${g.label}`);
     });
