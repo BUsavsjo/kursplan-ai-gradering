@@ -19,16 +19,28 @@
   <button onclick="testApi()">Testa API</button>
   <pre id="result" style="background:#eee;padding:1em;"></pre>
   <script>
+    async function fetchApi(url){
+      try{
+        const res = await fetch(url, { mode: 'cors' });
+        if(!res.ok) throw new Error('HTTP '+res.status);
+        return {res, viaProxy:false};
+      }catch(e){
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+        const res = await fetch(proxyUrl);
+        if(!res.ok) throw new Error('Proxy HTTP '+res.status);
+        return {res, viaProxy:true};
+      }
+    }
+
     async function testApi() {
       const apiBase = document.getElementById('apiBase').value.trim().replace(/\/+$/, '');
       const subjectId = document.getElementById('subjectId').value.trim();
       const url = `${apiBase}/subjects/${encodeURIComponent(subjectId)}?timespan=LATEST`;
       document.getElementById('result').textContent = 'Hämtar: ' + url;
       try {
-        const res = await fetch(url, { mode: 'cors' });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const {res, viaProxy} = await fetchApi(url);
         const data = await res.json();
-        document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+        document.getElementById('result').textContent = JSON.stringify(data, null, 2) + (viaProxy ? "\n(via proxy)" : '');
       } catch (e) {
         document.getElementById('result').textContent = 'Fel: ' + e + '\n\nSe webbläsarens konsol för mer info.';
         console.error(e);

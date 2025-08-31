@@ -62,6 +62,20 @@ function populateDropdown(){
   if(subjectsIndex.length>0) sel.value = subjectsIndex[0].id;
 }
 
+// Försök hämta med CORS, vid fel testa via öppen proxy
+async function fetchApi(url){
+  try{
+    const res = await fetch(url, { mode: 'cors' });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    return {res, viaProxy:false};
+  }catch(e){
+    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+    const res = await fetch(proxyUrl);
+    if(!res.ok) throw new Error('Proxy HTTP '+res.status);
+    return {res, viaProxy:true};
+  }
+}
+
 async function setSubjectById(subjectId){
   const meta = subjectsIndex.find(s => s.id === subjectId);
   assignments = []; // nollställ vid ämnesbyte
@@ -74,9 +88,8 @@ async function setSubjectById(subjectId){
     try{
       const apiBase = $('#apiBase').value.trim().replace(/\/+$/,'');
       const url = `${apiBase}/subjects/${encodeURIComponent(subjectId)}?timespan=LATEST`;
-      const r = await fetch(url, { mode: 'cors' }); // om CORS blockas -> catch
-      if(!r.ok) throw new Error('HTTP '+r.status);
-      const data = await r.json();
+      const {res, viaProxy} = await fetchApi(url); // hantera CORS via proxy vid behov
+      const data = await res.json();
 
       // försök mappa generiskt (apiet kan skilja sig lite i fält)
       currentSubject = {
@@ -87,7 +100,7 @@ async function setSubjectById(subjectId){
         knowledgeRequirements: data.knowledgeRequirements || data.knowledge_requirements || {}
       };
 
-      $('#status').textContent = 'Kursplan från API';
+      $('#status').textContent = viaProxy ? 'Kursplan via API (proxy)' : 'Kursplan från API';
       renderAll();
       return;
     }catch(e){
