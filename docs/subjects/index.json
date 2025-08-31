@@ -1,0 +1,19 @@
+[
+  { "id": "GRGRSVE07", "title": "Svenska", "file": "SV.json" },
+  { "id": "GRGRENG07", "title": "Engelska", "file": "ENG.json" },
+  { "id": "GRGRMAT07", "title": "Matematik", "file": "MAT.json" },
+  { "id": "GRGRBIO07", "title": "Biologi", "file": "BIO.json" },
+  { "id": "GRGRFYS07", "title": "Fysik", "file": "FYS.json" },
+  { "id": "GRGRKEM07", "title": "Kemi", "file": "KEM.json" },
+  { "id": "GRGRGEO07", "title": "Geografi", "file": "GEO.json" },
+  { "id": "GRGRHIS07", "title": "Historia", "file": "HIS.json" },
+  { "id": "GRGRREL07", "title": "Religionskunskap", "file": "REL.json" },
+  { "id": "GRGRSAM07", "title": "Samhällskunskap", "file": "SAM.json" },
+  { "id": "GRGRTEK07", "title": "Teknik", "file": "TEK.json" },
+  { "id": "GRGRBIL07", "title": "Bild", "file": "BIL.json" },
+  { "id": "GRGRMUS07", "title": "Musik", "file": "MUS.json" },
+  { "id": "GRGRSLO07", "title": "Slöjd", "file": "SLO.json" },
+  { "id": "GRGRIDH07", "title": "Idrott och hälsa", "file": "IDH.json" },
+  { "id": "GRGRHKK07", "title": "Hem- och konsumentkunskap", "file": "HKK.json" },
+  { "id": "GRGRMOD07", "title": "Moderna språk", "file": "MOD.json" }
+]

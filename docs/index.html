@@ -11,26 +11,28 @@
     <header class="top">
       <div>
         <h1>Syllabus-analys (stadier F–3 / 4–6 / 7–9)</h1>
-        <p class="muted">Välj kurs → lägg till moment → sätt AI-gradering per stadie.</p>
+        <p class="muted">Ämneslista lokalt → försök hämta detaljer via Skolverkets API, annars fallback till lokalt.</p>
       </div>
-      <label class="chip">
-        <input id="demoToggle" type="checkbox" checked />
-        Demo-läge
-      </label>
+      <div class="row">
+        <label class="chip">
+          <input id="useApiToggle" type="checkbox" checked />
+          Använd API
+        </label>
+      </div>
     </header>
 
     <section class="grid">
       <div class="card">
         <h3>Datakälla</h3>
         <label class="lbl">Skolverket Syllabus API-bas</label>
-        <input id="apiBase" value="https://api.skolverket.se/syllabus/v1" disabled />
-        <p class="tiny muted">OBS: CORS kan stoppa direktanrop. Demo-läget fungerar alltid.</p>
+        <input id="apiBase" value="https://api.skolverket.se/syllabus/v1" />
+        <p class="tiny muted">Vid CORS/HTTP-fel faller sidan tillbaka till lokala ämnesfiler i <code>/docs/subjects</code>.</p>
       </div>
 
       <div class="card">
         <h3>Välj kurs/ämne</h3>
         <select id="subjectSelect"></select>
-        <div id="loading" class="tiny muted" style="display:none;">Laddar ...</div>
+        <div id="status" class="tiny muted" style="min-height:1.2em"></div>
       </div>
 
       <div class="card">
