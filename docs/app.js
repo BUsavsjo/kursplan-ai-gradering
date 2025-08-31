@@ -87,17 +87,18 @@ async function setSubjectById(subjectId){
   if(useApi){
     try{
       const apiBase = $('#apiBase').value.trim().replace(/\/+$/,'');
-      const url = `${apiBase}/subjects/${encodeURIComponent(subjectId)}?timespan=LATEST`;
+      const url = `${apiBase}/subjects/${encodeURIComponent(subjectId)}?timespan=LATEST&include=centralContents,knowledgeRequirements,purpose`;
       const {res, viaProxy} = await fetchApi(url); // hantera CORS via proxy vid behov
       const data = await res.json();
+      const subj = data.subject ?? data;
 
-      // försök mappa generiskt (apiet kan skilja sig lite i fält)
+      // mappa fält från API
       currentSubject = {
-        subjectId: data.subjectId || data.id || subjectId,
-        title: data.title || data.name || meta.title,
-        purpose: (data.purpose && (data.purpose.text || data.purpose)) || '',
-        centralContent: normalizeCentralContent(data.centralContent || data.central_content),
-        knowledgeRequirements: data.knowledgeRequirements || data.knowledge_requirements || {}
+        subjectId: subj.subjectId || subj.id || subjectId,
+        title: subj.name || meta.title,
+        purpose: subj.purpose || '',
+        centralContent: normalizeCentralContentFromApi(subj.centralContents),
+        knowledgeRequirements: normalizeKR(subj.knowledgeRequirements)
       };
 
       $('#status').textContent = viaProxy ? 'Kursplan via API (proxy)' : 'Kursplan från API';
@@ -130,25 +131,43 @@ function normalizeCentralContent(ccRaw){
   });
 }
 
+function normalizeCentralContentFromApi(ccList){
+  if(!Array.isArray(ccList)) return [];
+  return ccList.map((item, i) => ({
+    id: item.year || `CC${i+1}`,
+    text: item.text || ''
+  })).filter(x => x.text.trim() !== '');
+}
+
+function normalizeKR(krList){
+  if(!Array.isArray(krList)) return {};
+  const out = {};
+  krList.forEach((k,i)=>{
+    const key = [k.year, k.gradeStep].filter(Boolean).join(' · ') || `KR${i+1}`;
+    out[key] = k.text || '';
+  });
+  return out;
+}
+
 // ---- render ----
 function renderAll(){ renderSubject(); renderAssignments(); renderPreview(); }
 
 function renderSubject(){
   $('#subjectTitle').textContent = `Ämnesöversikt: ${currentSubject?.title || ''}`;
   $('#subjectPurpose').innerHTML = currentSubject?.purpose
-    ? `<div class="block"><h4>Syfte</h4><div>${escapeHTML(currentSubject.purpose)}</div></div>` : '';
+    ? `<div class="block"><h4>Syfte</h4><div>${currentSubject.purpose}</div></div>` : '';
 
   const cc = $('#ccList'); cc.innerHTML = '';
   (currentSubject?.centralContent || []).forEach(c=>{
     const li = document.createElement('li');
-    li.innerHTML = `<span class="badge">${c.id}</span> ${escapeHTML(c.text)}`;
+    li.innerHTML = `<span class="badge">${c.id}</span> ${c.text}`;
     cc.appendChild(li);
   });
 
   const kr = $('#krList'); kr.innerHTML = '';
   Object.entries(currentSubject?.knowledgeRequirements || {}).forEach(([k,v])=>{
     const li = document.createElement('li');
-    li.innerHTML = `<span class="badge">${k}</span> ${escapeHTML(String(v))}`;
+    li.innerHTML = `<span class="badge">${k}</span> ${v}`;
     kr.appendChild(li);
   });
 }
