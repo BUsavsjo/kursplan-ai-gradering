@@ -7,6 +7,8 @@ const GRADES = [
   {key:'OBLIGATORISKT',label:'Obligatoriskt',icon:'📌'}
 ];
 const CC_STAGE_LABELS = { '1-3':'lågstadiet', '4-6':'mellanstadiet', '7-9':'högstadiet' };
+const CC_STAGE_ORDER = Object.keys(CC_STAGE_LABELS);
+const GRADE_ORDER = GRADES.reduce((m,g,i)=>{ m[g.key]=i; return m; },{});
 
 // ---- State ----
 let subjectsIndex = [];
@@ -32,6 +34,8 @@ async function init(){
   $('#btnExportMD').addEventListener('click', exportMD);
   $('#btnAdd').addEventListener('click', addAssignment);
   $('#ccStageFilter').addEventListener('change', renderSubject);
+  $('#ccSort').addEventListener('change', renderSubject);
+  $('#assignStageSort').addEventListener('change', ()=>{ renderAssignments(); renderPreview(); });
 
   // ladda ämneslista lokalt
   await loadIndex();
@@ -160,14 +164,24 @@ function renderSubject(){
     ? `<div class="block"><h4>Syfte</h4><div>${currentSubject.purpose}</div></div>` : '';
 
   const stageFilter = $('#ccStageFilter')?.value || '';
+  const stageSort = $('#ccSort')?.value || '';
   const ccTitle = stageFilter && CC_STAGE_LABELS[stageFilter]
     ? `Centralt innehåll för ${CC_STAGE_LABELS[stageFilter]}`
     : 'Centralt innehåll';
   $('#ccTitle').textContent = ccTitle;
 
   const cc = $('#ccList'); cc.innerHTML = '';
-  const knownStageIds = Object.keys(CC_STAGE_LABELS);
-  (currentSubject?.centralContent || []).forEach(c=>{
+  const knownStageIds = CC_STAGE_ORDER;
+  let items = [...(currentSubject?.centralContent || [])];
+  if(stageSort){
+    const dir = stageSort==='desc' ? -1 : 1;
+    items.sort((a,b)=>{
+      const ai = knownStageIds.indexOf(a.id);
+      const bi = knownStageIds.indexOf(b.id);
+      return ((ai===-1?99:ai)-(bi===-1?99:bi))*dir;
+    });
+  }
+  items.forEach(c=>{
     const isStage = knownStageIds.includes(c.id);
     if(stageFilter && isStage && c.id !== stageFilter) return;
     const li = document.createElement('li');
@@ -198,7 +212,16 @@ function renderAssignments(){
     host.innerHTML = '<div class="muted tiny">Inga moment ännu. Klicka ”Nytt moment”.</div>';
     return;
   }
-  assignments.forEach(a=>{
+  const stageSort = $('#assignStageSort')?.value || '';
+  let list = [...assignments];
+  if(stageSort){
+    list.sort((a,b)=>{
+      const ai = GRADE_ORDER[a.gradingByStage[stageSort]] ?? -1;
+      const bi = GRADE_ORDER[b.gradingByStage[stageSort]] ?? -1;
+      return ai - bi;
+    });
+  }
+  list.forEach(a=>{
     const wrap = document.createElement('div'); wrap.className='assign';
     wrap.innerHTML = `
       <div class="row">
@@ -242,8 +265,17 @@ function renderPreview(){
     return;
   }
   box.classList.remove('muted');
+  const stageSort = $('#assignStageSort')?.value || '';
   const out = [`# ${currentSubject?.title || 'Ämne'} – AI-gradering per stadie`];
-  assignments.forEach((a,i)=>{
+  let list = [...assignments];
+  if(stageSort){
+    list.sort((a,b)=>{
+      const ai = GRADE_ORDER[a.gradingByStage[stageSort]] ?? -1;
+      const bi = GRADE_ORDER[b.gradingByStage[stageSort]] ?? -1;
+      return ai - bi;
+    });
+  }
+  list.forEach((a,i)=>{
     out.push(`\n## ${i+1}. ${a.name}`);
     STAGES.forEach(s=>{
       const g = GRADES.find(x=>x.key===a.gradingByStage[s.key]);
