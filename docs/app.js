@@ -1,8 +1,8 @@
-// ------- Minimal “Kursplan → TXT” med AIAS-markering --------
+// ------- Minimal “Kursplan → TXT” med AIAS-markering (läs-vy via <pre>) --------
 
 const API_BASE = "https://api.skolverket.se/syllabus/v1";
 
-// AIAS-lexikon (kan ämnesspecifieras senare)
+// AIAS-lexikon
 const AIAS = {
   FORBJUDET:   { icon:'⛔', words:['återge','namnge','definiera','enkla','i huvudsak'] },
   TILLATET:    { icon:'✅', words:['beskriva','jämföra','resonera','utvecklade'] },
@@ -136,7 +136,6 @@ async function setSubject(subjectId){
     setStatus(viaProxy ? 'Kursplan via API (proxy)' : 'Kursplan via API');
   }catch(e){
     console.warn('setSubject fallback:', e);
-    // Tom kursplan (bättre än krasch)
     currentSubject = { subjectId:subjectId, title:(subjectsIndex.find(x=>x.id===subjectId)?.name)||'Ämne', purpose:'', centralContent:[], knowledgeRequirements:{} };
     setStatus('API misslyckades – tom kursplan');
   }
@@ -209,13 +208,13 @@ function buildText(subject, stageKey='4-6', opts={aias:true}){
   return lines.join('\n');
 }
 
-// ---------- Rendera till textarea ----------
+// ---------- Rendera till <pre> ----------
 function renderText(){
-  if(!currentSubject){ $('#mdOut').value = ''; return; }
+  if(!currentSubject){ $('#mdOut').textContent = ''; return; }
   const stage = $('#stageSelect').value;
   const aias = $('#toggleAias').checked;
   const txt = buildText(currentSubject, stage, {aias});
-  $('#mdOut').value = txt;
+  $('#mdOut').textContent = txt; // <pre> visar ren text
 }
 
 // ---------- Export / kopiera / dela ----------
@@ -233,7 +232,8 @@ $('#btnDownload').addEventListener('click', ()=>{
 
 $('#btnCopy').addEventListener('click', async ()=>{
   try{
-    await navigator.clipboard.writeText($('#mdOut').value || '');
+    const txt = $('#mdOut').textContent || '';
+    await navigator.clipboard.writeText(txt);
     setStatus('Text kopierad ✔');
     setTimeout(()=>setStatus(''),1200);
   }catch{ setStatus('Kunde inte kopiera'); }
@@ -241,7 +241,7 @@ $('#btnCopy').addEventListener('click', async ()=>{
 
 $('#btnShare').addEventListener('click', async ()=>{
   const title = currentSubject?.title || 'Kursplan';
-  const text = $('#mdOut').value || '';
+  const text = $('#mdOut').textContent || '';
   if(navigator.share){
     try{
       await navigator.share({ title: `${title} – kursplan`, text });
