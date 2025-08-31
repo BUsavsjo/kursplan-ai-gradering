@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8" />
+  <title>Syllabus-analys (F–3 / 4–6 / 7–9)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <h1>Syllabus-analys (stadier F–3 / 4–6 / 7–9)</h1>
+        <p class="muted">Välj kurs → lägg till moment → sätt AI-gradering per stadie.</p>
+      </div>
+      <label class="chip">
+        <input id="demoToggle" type="checkbox" checked />
+        Demo-läge
+      </label>
+    </header>
+
+    <section class="grid">
+      <div class="card">
+        <h3>Datakälla</h3>
+        <label class="lbl">Skolverket Syllabus API-bas</label>
+        <input id="apiBase" value="https://api.skolverket.se/syllabus/v1" disabled />
+        <p class="tiny muted">OBS: CORS kan stoppa direktanrop. Demo-läget fungerar alltid.</p>
+      </div>
+
+      <div class="card">
+        <h3>Välj kurs/ämne</h3>
+        <select id="subjectSelect"></select>
+        <div id="loading" class="tiny muted" style="display:none;">Laddar ...</div>
+      </div>
+
+      <div class="card">
+        <h3>Export</h3>
+        <div class="row">
+          <button id="btnExportJSON">Exportera JSON</button>
+          <button id="btnExportMD">Exportera instruktioner (MD)</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h3 id="subjectTitle">Ämnesöversikt</h3>
+        <div id="subjectPurpose"></div>
+        <div class="block">
+          <h4>Centralt innehåll</h4>
+          <ul id="ccList" class="list"></ul>
+        </div>
+        <div class="block">
+          <h4>Kunskapskrav</h4>
+          <ul id="krList" class="list"></ul>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row between">
+          <h3>Bedömningsmoment (stadie-matris)</h3>
+          <button id="btnAdd">+ Nytt moment</button>
+        </div>
+        <div id="assignments"></div>
+      </div>
+
+      <div class="card">
+        <h3>Förhandsvisning & PM-text</h3>
+        <div id="preview" class="preview muted">Lägg till ett moment och sätt gradering per stadie.</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Graderingsnivåer (stödmatris)</h3>
+      <div class="levels">
+        <div class="lvl">
+          <div class="icon">⛔</div>
+          <div><b>Förbjudet</b> – AI används inte. Uppgiften genomförs utan digitala hjälpmedel.
+            <div class="tiny muted">Exempelord (Skolverket): <em>enkla</em>, <em>översiktligt</em>, <em>i huvudsak fungerande</em></div>
+          </div>
+        </div>
+        <div class="lvl">
+          <div class="icon">◑</div>
+          <div><b>Begränsat</b> – AI kan ge stöd men inte färdig produkt. <i>Logg krävs.</i>
+            <div class="tiny muted">Exempelord (Skolverket): <em>pröva</em>, <em>använda i enkla sammanhang</em>, <em>med viss säkerhet</em></div>
+          </div>
+        </div>
+        <div class="lvl">
+          <div class="icon">✅</div>
+          <div><b>Tillåtet</b> – AI som hjälpmedel; eleven visar förståelse. <i>Logg krävs.</i>
+            <div class="tiny muted">Exempelord (Skolverket): <em>utvecklade</em>, <em>resonera utförligt</em>, <em>jämföra</em>, <em>bearbeta</em></div>
+          </div>
+        </div>
+        <div class="lvl">
+          <div class="icon">📌</div>
+          <div><b>Obligatoriskt</b> – AI <i>ska</i> användas i ett moment. <i>Reflektion krävs.</i>
+            <div class="tiny muted">Exempelord (Skolverket): <em>analysera</em>, <em>värdera</em>, <em>resonera nyanserat</em>, <em>med säkerhet</em></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="tiny muted">
+      <p>Det är alltid lärarens professionella tolkning som avgör. Verktyget är ett stöd, inte en automatisk bedömning.</p>
+    </footer>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
