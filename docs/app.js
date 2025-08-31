@@ -32,6 +32,8 @@ async function init(){
   // knappar
   $('#btnExportJSON').addEventListener('click', exportJSON);
   $('#btnExportMD').addEventListener('click', exportMD);
+  $('#btnExportDOCX').addEventListener('click', exportDOCX);
+  $('#btnExportPDF').addEventListener('click', exportPDF);
   $('#btnAdd').addEventListener('click', addAssignment);
   $('#ccStageFilter').addEventListener('change', renderSubject);
   $('#ccSort').addEventListener('change', renderSubject);
@@ -209,18 +211,17 @@ function addAssignment(){
 
 function renderAssignments(){
   const host = $('#assignments'); host.innerHTML = '';
-  if(assignments.length===0){
-    host.innerHTML = '<div class="muted tiny">Inga moment ännu. Klicka ”Nytt moment”.</div>';
-    return;
-  }
   const stageSort = $('#assignStageSort')?.value || '';
   let list = [...assignments];
   if(stageSort){
-    list.sort((a,b)=>{
-      const ai = a.stage===stageSort ? GRADE_ORDER[a.grade] ?? -1 : Infinity;
-      const bi = b.stage===stageSort ? GRADE_ORDER[b.grade] ?? -1 : Infinity;
-      return ai - bi;
-    });
+    list = list.filter(a=>a.stage===stageSort);
+    list.sort((a,b)=>(GRADE_ORDER[a.grade] ?? -1) - (GRADE_ORDER[b.grade] ?? -1));
+  }
+  if(list.length===0){
+    host.innerHTML = stageSort
+      ? '<div class="muted tiny">Inga moment för valt stadie.</div>'
+      : '<div class="muted tiny">Inga moment ännu. Klicka ”Nytt moment”.</div>';
+    return;
   }
   list.forEach(a=>{
     const wrap = document.createElement('div'); wrap.className='assign';
@@ -254,22 +255,24 @@ function renderAssignments(){
 
 function renderPreview(){
   const box = $('#preview');
-  if(assignments.length===0){
-    box.textContent = 'Lägg till ett moment och sätt gradering per stadie.';
+  const stageSort = $('#assignStageSort')?.value || '';
+  let list = [...assignments];
+  if(stageSort){
+    list = list.filter(a=>a.stage===stageSort);
+    list.sort((a,b)=>(GRADE_ORDER[a.grade] ?? -1) - (GRADE_ORDER[b.grade] ?? -1));
+  }
+  if(list.length===0){
+    box.textContent = stageSort
+      ? 'Inga moment för valt stadie.'
+      : 'Lägg till ett moment och sätt gradering per stadie.';
     box.classList.add('muted');
     return;
   }
   box.classList.remove('muted');
-  const stageSort = $('#assignStageSort')?.value || '';
-  const out = [`# ${currentSubject?.title || 'Ämne'} – AI-gradering per stadie`];
-  let list = [...assignments];
-  if(stageSort){
-    list.sort((a,b)=>{
-      const ai = a.stage===stageSort ? GRADE_ORDER[a.grade] ?? -1 : Infinity;
-      const bi = b.stage===stageSort ? GRADE_ORDER[b.grade] ?? -1 : Infinity;
-      return ai - bi;
-    });
-  }
+  const header = stageSort
+    ? `AI-gradering för ${STAGES.find(s=>s.key===stageSort)?.label || stageSort}`
+    : 'AI-gradering per stadie';
+  const out = [`# ${currentSubject?.title || 'Ämne'} – ${header}`];
   list.forEach((a,i)=>{
     const stageLabel = STAGES.find(s=>s.key===a.stage)?.label || a.stage;
     const g = GRADES.find(x=>x.key===a.grade);
@@ -293,8 +296,22 @@ function exportJSON(){
 function exportMD(){
   download('syllabus-instruktioner.md', $('#preview').textContent || '', 'text/markdown');
 }
+function exportDOCX(){
+  const html = `<pre>${escapeHTML($('#preview').textContent || '')}</pre>`;
+  const blob = window.htmlDocx ? window.htmlDocx.asBlob(html) : new Blob([$('#preview').textContent || '']);
+  download('syllabus-instruktioner.docx', blob, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+}
+function exportPDF(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const text = $('#preview').textContent || '';
+  const lines = doc.splitTextToSize(text, 180);
+  doc.text(lines, 10, 10);
+  const blob = doc.output('blob');
+  download('syllabus-instruktioner.pdf', blob, 'application/pdf');
+}
 function download(filename, data, type){
-  const blob = new Blob([data], {type});
+  const blob = data instanceof Blob ? data : new Blob([data], {type});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href=url; a.download=filename; a.click();
   URL.revokeObjectURL(url);
