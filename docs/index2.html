@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kursplan → Text (med AIAS-markering)</title>
+  <style>
+    body{font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;margin:0;background:#fafafa;color:#222}
+    header{padding:14px 16px;background:#fff;border-bottom:1px solid #eee;position:sticky;top:0}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    select,button,input[type="text"]{padding:8px 10px;border:1px solid #ddd;border-radius:8px;background:#fff}
+    button{cursor:pointer}
+    main{padding:16px;max-width:1100px;margin:0 auto}
+    textarea{width:100%;min-height:60vh;border:1px solid #ddd;border-radius:10px;padding:12px;background:#fff;font-family:ui-monospace,monospace}
+    .muted{color:#666}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+    footer{padding:16px;color:#555}
+    .badge{display:inline-block;border:1px solid #eee;border-radius:999px;padding:2px 8px;background:#fff}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="row">
+      <div class="row">
+        <label>Ämne</label>
+        <select id="subjectSelect"></select>
+      </div>
+      <div class="row">
+        <label>Stadie</label>
+        <select id="stageSelect">
+          <option value="1-3">F–3</option>
+          <option value="4-6" selected>4–6</option>
+          <option value="7-9">7–9</option>
+        </select>
+      </div>
+      <label class="row"><input id="toggleAias" type="checkbox" checked> Visa AI-markeringar (AIAS)</label>
+      <span id="status" class="muted"></span>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <span class="badge">⛔ Förbjudet</span>
+      <span class="badge">✅ Tillåtet</span>
+      <span class="badge">📌 Förväntat</span>
+      <span class="badge">🔗 Integrerat</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="toolbar">
+      <button id="btnCopy">Kopiera text</button>
+      <button id="btnDownload">Ladda ner TXT</button>
+      <button id="btnShare">Dela…</button>
+    </div>
+    <textarea id="mdOut" spellcheck="false" aria-label="Kursplan som text"></textarea>
+    <p class="muted">Tips: klistra texten i kurs-PM, Teams/Google Classroom eller dela via knappen “Dela…”.</p>
+  </main>
+
+  <footer>
+    <p class="muted">
+      ⚖️ Disclaimer: Symbolerna (⛔/✅/📌/🔗) är pedagogiska förslag baserade på kursplanens formuleringar (AIAS).
+      De ersätter inte lärarens professionella tolkning. Verktyget behandlar inga personuppgifter och sparar endast lokala
+      inställningar i webbläsaren. Användning av AI i undervisningen ska ske enligt skolans policy och gällande lagstiftning.
+    </p>
+  </footer>
+
+  <script src="./app.js"></script>
+</body>
+</html>
