@@ -59,6 +59,13 @@
                 <option value="7-9">Högstadiet (7–9)</option>
               </select>
             </label>
+            <label>Sortera:
+              <select id="ccSort">
+                <option value="">Ursprunglig</option>
+                <option value="asc">F–3 → 7–9</option>
+                <option value="desc">7–9 → F–3</option>
+              </select>
+            </label>
           </div>
           <ul id="ccList" class="list"></ul>
         </div>
@@ -71,7 +78,17 @@
       <div class="card">
         <div class="row between">
           <h3>Bedömningsmoment (stadie-matris)</h3>
-          <button id="btnAdd">+ Nytt moment</button>
+          <div class="row">
+            <label class="tiny">Sortera:
+              <select id="assignStageSort">
+                <option value="">Ingen</option>
+                <option value="F-3">F–3</option>
+                <option value="4-6">4–6</option>
+                <option value="7-9">7–9</option>
+              </select>
+            </label>
+            <button id="btnAdd">+ Nytt moment</button>
+          </div>
         </div>
         <div id="assignments"></div>
       </div>
