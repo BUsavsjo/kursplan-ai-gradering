@@ -1,0 +1,18 @@
+{
+  "subjectId": "GRGRSVE01",
+  "title": "Svenska",
+  "purpose": "Utveckla förmåga att tala, läsa, skriva och värdera information källkritiskt.",
+  "centralContent": [
+    { "id": "CC1", "text": "Lässtrategier för att förstå och tolka texter." },
+    { "id": "CC2", "text": "Strategier för att skriva olika typer av texter." },
+    { "id": "CC3", "text": "Muntlig framställning och samtal." },
+    { "id": "CC4", "text": "Språkets struktur och normer." },
+    { "id": "CC5", "text": "Informationssökning och källkritik i olika medier." },
+    { "id": "CC6", "text": "Digitala verktyg för bearbetning och produktion av texter." }
+  ],
+  "knowledgeRequirements": {
+    "E": "Enkla resonemang och i huvudsak fungerande struktur.",
+    "C": "Utvecklade resonemang och relativt god språklig variation.",
+    "A": "Välutvecklade resonemang, god anpassning och säker form."
+  }
+}

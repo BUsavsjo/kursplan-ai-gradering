@@ -1,0 +1,18 @@
+{
+  "subjectId": "GRGRTEK07",
+  "title": "Teknik",
+  "purpose": "Utveckla tekniskt kunnande: förstå, utforma och värdera tekniska lösningar på ett säkert och hållbart sätt.",
+  "centralContent": [
+    { "id": "CC1", "text": "Hur tekniska lösningar i vardagen är uppbyggda och fungerar." },
+    { "id": "CC2", "text": "Material och enkla mekanismer; egenskaper och användningsområden." },
+    { "id": "CC3", "text": "Dokumentation i bilder, skisser, modeller och texter." },
+    { "id": "CC4", "text": "Digitala verktyg för styrning och programmering." },
+    { "id": "CC5", "text": "Säker och ansvarsfull användning av teknik." },
+    { "id": "CC6", "text": "Tekniska system i hemmet och samhället; för- och nackdelar." }
+  ],
+  "knowledgeRequirements": {
+    "E": "Enkla beskrivningar och i huvudsak fungerande konstruktioner.",
+    "C": "Utvecklade beskrivningar och relativt väl fungerande konstruktioner.",
+    "A": "Välutvecklade, nyanserade beskrivningar och väl fungerande konstruktioner."
+  }
+}

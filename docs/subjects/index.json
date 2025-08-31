@@ -1,0 +1,31 @@
+[
+  { "id": "GRGRBIL01", "title": "Bild", "file": "GRGRBIL01.json" },
+  { "id": "GRGRBIO01", "title": "Biologi", "file": "GRGRBIO01.json" },
+  { "id": "GRGRDAN01", "title": "Dans", "file": "GRGRDAN01.json" },
+  { "id": "GRGRENG01", "title": "Engelska", "file": "GRGRENG01.json" },
+  { "id": "GRGRFYS01", "title": "Fysik", "file": "GRGRFYS01.json" },
+  { "id": "GRGRGEO01", "title": "Geografi", "file": "GRGRGEO01.json" },
+  { "id": "GRGRHKK01", "title": "Hem- och konsumentkunskap", "file": "GRGRHKK01.json" },
+  { "id": "GRGRHIS01", "title": "Historia", "file": "GRGRHIS01.json" },
+  { "id": "GRGRIDR01", "title": "Idrott och hälsa", "file": "GRGRIDR01.json" },
+  { "id": "GRGRJUD01", "title": "Judiska studier", "file": "GRGRJUD01.json" },
+  { "id": "GRGRKEM01", "title": "Kemi", "file": "GRGRKEM01.json" },
+  { "id": "GRGRMAT01", "title": "Matematik", "file": "GRGRMAT01.json" },
+  { "id": "GRGRMSP01", "title": "Moderna språk", "file": "GRGRMSP01.json" },
+  { "id": "GRGRMOD01", "title": "Modersmål", "file": "GRGRMOD01.json" },
+
+  { "id": "GRGRMOE01", "title": "Modersmål – finska (nationellt minoritetsspråk)", "file": "GRGRMOE01.json" },
+  { "id": "GRGRMOM01", "title": "Modersmål – romani chib (nationellt minoritetsspråk)", "file": "GRGRMOM01.json" },
+  { "id": "GRGRMOR01", "title": "Modersmål – jiddisch (nationellt minoritetsspråk)", "file": "GRGRMOR01.json" },
+  { "id": "GRGRMOS01", "title": "Modersmål – meänkieli (nationellt minoritetsspråk)", "file": "GRGRMOS01.json" },
+
+  { "id": "GRGRMUS01", "title": "Musik", "file": "GRGRMUS01.json" },
+  { "id": "GRGRREL01", "title": "Religionskunskap", "file": "GRGRREL01.json" },
+  { "id": "GRGRSAM01", "title": "Samhällskunskap", "file": "GRGRSAM01.json" },
+  { "id": "GRGRSLJ01", "title": "Slöjd", "file": "GRGRSLJ01.json" },
+  { "id": "GRGRSVE01", "title": "Svenska", "file": "GRGRSVE01.json" },
+  { "id": "GRGRSVA01", "title": "Svenska som andraspråk", "file": "GRGRSVA01.json" },
+  { "id": "GRGRTSP01", "title": "Teckenspråk för hörande", "file": "GRGRTSP01.json" },
+  { "id": "GRGRTEK01", "title": "Teknik", "file": "GRGRTEK01.json" },
+  { "id": "GRSMSMI01", "title": "Samiska", "file": "GRSMSMI01.json" }
+]
