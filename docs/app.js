@@ -2,7 +2,7 @@
 
 const API_BASE = "https://api.skolverket.se/syllabus/v1";
 
-// AIAS-lexikon
+// AIAS-lexikon (kan ämnesspecifieras senare)
 const AIAS = {
   FORBJUDET:   { icon:'⛔', words:['återge','namnge','definiera','enkla','i huvudsak'] },
   TILLATET:    { icon:'✅', words:['beskriva','jämföra','resonera','utvecklade'] },
@@ -10,26 +10,31 @@ const AIAS = {
   INTEGRERAT:  { icon:'🔗', words:['kritiskt granska','problematisera','nyansera'] }
 };
 
-let subjectsIndex = [];
-let currentSubject = null;
+// State
+let subjectsIndex = [];      // [{id,name}]
+let currentSubject = null;   // {subjectId,title,purpose,centralContent:[{id,text}],knowledgeRequirements:{key:text}}
 
+// Helpers
 const $ = sel => document.querySelector(sel);
 const SAVE_KEY = 'kpai:txt:v1';
 
-function setStatus(msg){ $('#status').textContent = msg; }
+function setStatus(msg){ $('#status').textContent = msg || ''; }
 function saveLocal(){
-  const s = {
-    subjectId: $('#subjectSelect').value,
-    stage: $('#stageSelect').value,
-    aias: $('#toggleAias').checked
-  };
-  localStorage.setItem(SAVE_KEY, JSON.stringify(s));
+  try{
+    const s = {
+      subjectId: $('#subjectSelect')?.value,
+      stage: $('#stageSelect')?.value,
+      aias: $('#toggleAias')?.checked
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(s));
+  }catch{}
 }
 function loadLocal(){
   try { return JSON.parse(localStorage.getItem(SAVE_KEY) || '{}'); }
   catch { return {}; }
 }
 
+// ---------- Nätverk: API med proxy-fallback ----------
 async function fetchApi(url){
   try{
     const res = await fetch(url, {mode:'cors'});
@@ -43,28 +48,75 @@ async function fetchApi(url){
   }
 }
 
+// ---------- Ladda ämnen till dropdown ----------
 async function loadSubjects(){
   setStatus('Hämtar ämnen…');
   try{
     const {res, viaProxy} = await fetchApi(`${API_BASE}/subjects`);
-    const list = await res.json();
-    subjectsIndex = (Array.isArray(list)? list : []).map(x=>({id:x.id, name:x.name})).sort((a,b)=>a.name.localeCompare(b.name,'sv'));
+    const raw = await res.json();
+
+    // Tillåt olika format: ren array, {items:[]}, {subjects:[]}
+    const arr =
+      Array.isArray(raw) ? raw :
+      Array.isArray(raw?.items) ? raw.items :
+      Array.isArray(raw?.subjects) ? raw.subjects :
+      [];
+
+    if(!arr.length) throw new Error('Tom ämneslista från API');
+
+    subjectsIndex = arr
+      .map(x=>({ id: x.id || x.subjectId, name: x.name || x.title }))
+      .filter(s=> s.id && s.name)
+      .sort((a,b)=> a.name.localeCompare(b.name,'sv'));
+
+    if(!subjectsIndex.length) throw new Error('Inga giltiga poster (saknar id/name)');
+
     setStatus(viaProxy ? 'Ämnen via API (proxy)' : 'Ämnen via API');
   }catch(e){
-    subjectsIndex = [
-      {id:'GRGRSVE01', name:'Svenska'},
-      {id:'GRGRBIL01', name:'Bild'},
-      {id:'GRGRTEK01', name:'Teknik'}
-    ];
-    setStatus('API misslyckades – fallback');
+    console.warn('loadSubjects fallback:', e);
+    setStatus('API misslyckades – visar lokal ämneslista');
+    subjectsIndex = getLocalSubjectsFallback();
   }
+
+  // Rendera dropdown
   const sel = $('#subjectSelect');
   sel.innerHTML = '';
-  for(const s of subjectsIndex){
-    sel.add(new Option(`${s.name} · ${s.id}`, s.id));
-  }
+  subjectsIndex.forEach(s => sel.add(new Option(`${s.name} · ${s.id}`, s.id)));
+
+  // Välj första om inget tidigare val finns
+  if(!sel.value && subjectsIndex.length){ sel.value = subjectsIndex[0].id; }
 }
 
+// Full fallback-lista (kod → namn) för grundskolans ämnen
+function getLocalSubjectsFallback(){
+  const S = [
+    ['GRGRBIL01','Bild'],
+    ['GRGRBIO01','Biologi'],
+    ['GRGRDAN01','Dans'],
+    ['GRGRENG01','Engelska'],
+    ['GRGRFYS01','Fysik'],
+    ['GRGRGEO01','Geografi'],
+    ['GRGRHKK01','Hem- och konsumentkunskap'],
+    ['GRGRHIS01','Historia'],
+    ['GRGRIDR01','Idrott och hälsa'],
+    ['GRGRJUD01','Judiska studier'],
+    ['GRGRKEM01','Kemi'],
+    ['GRGRMAT01','Matematik'],
+    // Moderna språk/Modersmål kräver språkkoder → utelämnas i fallback
+    ['GRGRMUS01','Musik'],
+    ['GRGRREL01','Religionskunskap'],
+    ['GRGRSAM01','Samhällskunskap'],
+    ['GRGRSLJ01','Slöjd'],
+    ['GRGRSVE01','Svenska'],
+    ['GRGRSVA01','Svenska som andraspråk'],
+    ['GRGRTSP01','Teckenspråk för hörande'],
+    ['GRGRTEK01','Teknik'],
+    ['GRSMSMI01','Samiska'],
+  ];
+  return S.map(([id,name])=>({id,name}));
+}
+
+// ---------- Hämta kursplan-detaljer för valt ämne ----------
 async function setSubject(subjectId){
   if(!subjectId) return;
   setStatus('Hämtar kursplan…');
@@ -83,7 +135,9 @@ async function setSubject(subjectId){
     };
     setStatus(viaProxy ? 'Kursplan via API (proxy)' : 'Kursplan via API');
   }catch(e){
-    currentSubject = { subjectId:subjectId, title:'Ämne', purpose:'', centralContent:[], knowledgeRequirements:{} };
+    console.warn('setSubject fallback:', e);
+    // Tom kursplan (bättre än krasch)
+    currentSubject = { subjectId:subjectId, title:(subjectsIndex.find(x=>x.id===subjectId)?.name)||'Ämne', purpose:'', centralContent:[], knowledgeRequirements:{} };
     setStatus('API misslyckades – tom kursplan');
   }
   renderText();
@@ -105,6 +159,7 @@ function normalizeKR(list){
   return out;
 }
 
+// ---------- AIAS-markering ----------
 function aiasMark(text, enabled=true){
   if(!enabled) return text||'';
   let t = String(text||'');
@@ -118,6 +173,7 @@ function aiasMark(text, enabled=true){
 }
 function escapeRegExp(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
 
+// ---------- Bygg TXT från kursplan ----------
 function buildText(subject, stageKey='4-6', opts={aias:true}){
   const lines = [`${subject.title || 'Ämne'} – kursplan (${stageKey})`, ''];
 
@@ -153,6 +209,7 @@ function buildText(subject, stageKey='4-6', opts={aias:true}){
   return lines.join('\n');
 }
 
+// ---------- Rendera till textarea ----------
 function renderText(){
   if(!currentSubject){ $('#mdOut').value = ''; return; }
   const stage = $('#stageSelect').value;
@@ -161,7 +218,7 @@ function renderText(){
   $('#mdOut').value = txt;
 }
 
-// Export
+// ---------- Export / kopiera / dela ----------
 $('#btnDownload').addEventListener('click', ()=>{
   if(!currentSubject) return;
   const stage = $('#stageSelect').value;
@@ -198,12 +255,17 @@ $('#btnShare').addEventListener('click', async ()=>{
   }
 });
 
+// ---------- Init ----------
 (async function init(){
+  // Event handlers
   $('#subjectSelect').addEventListener('change', e=>{ setSubject(e.target.value); saveLocal(); });
   $('#stageSelect').addEventListener('change', ()=>{ renderText(); saveLocal(); });
   $('#toggleAias').addEventListener('change', ()=>{ renderText(); saveLocal(); });
 
+  // Ladda ämnen
   await loadSubjects();
+
+  // Återställ tidigare val
   const prev = loadLocal();
   if(prev.subjectId && [...$('#subjectSelect').options].some(o=>o.value===prev.subjectId)){
     $('#subjectSelect').value = prev.subjectId;
@@ -211,7 +273,10 @@ $('#btnShare').addEventListener('click', async ()=>{
   if(prev.stage) $('#stageSelect').value = prev.stage;
   if(typeof prev.aias === 'boolean') $('#toggleAias').checked = prev.aias;
 
+  // Hämta kursplan
   if($('#subjectSelect').value){
     await setSubject($('#subjectSelect').value);
+  } else {
+    setStatus('Ingen ämnespost i listan');
   }
 })();
