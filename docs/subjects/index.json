@@ -1,6 +1,6 @@
 [
-  { "id": "GRGRSVE07", "title": "Svenska", "file": "SV.json" },
-  { "id": "GRGRENG07", "title": "Engelska", "file": "ENG.json" },
+  { "id": "GRGRSVE01", "title": "Svenska", "file": "SV.json" },
+  { "id": "GRGRENG01", "title": "Engelska", "file": "ENG.json" },
   { "id": "GRGRMAT07", "title": "Matematik", "file": "MAT.json" },
   { "id": "GRGRBIO07", "title": "Biologi", "file": "BIO.json" },
   { "id": "GRGRFYS07", "title": "Fysik", "file": "FYS.json" },
