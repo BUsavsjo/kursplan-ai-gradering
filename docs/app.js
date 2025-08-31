@@ -1,5 +1,9 @@
 // ---- UI-konstanter ----
-const STAGES = [{key:'F-3',label:'F–3'},{key:'4-6',label:'4–6'},{key:'7-9',label:'7–9'}];
+const STAGES = [
+  {key:'1-3',label:'Lågstadiet (1–3)'},
+  {key:'4-6',label:'Mellanstadiet (4–6)'},
+  {key:'7-9',label:'Högstadiet (7–9)'}
+];
 const GRADES = [
   {key:'FORBJUDET',label:'Förbjudet',icon:'⛔'},
   {key:'ALLOWED_LIMITED',label:'Begränsat',icon:'◑'},
@@ -7,7 +11,6 @@ const GRADES = [
   {key:'OBLIGATORISKT',label:'Obligatoriskt',icon:'📌'}
 ];
 const CC_STAGE_LABELS = { '1-3':'lågstadiet', '4-6':'mellanstadiet', '7-9':'högstadiet' };
-const FILTER_TO_STAGE_KEY = { '1-3':'F-3', '4-6':'4-6', '7-9':'7-9' };
 
 // ---- State ----
 let subjectsIndex = [];
@@ -196,14 +199,14 @@ function addAssignment(){
   const a = {
     id: uid(),
     name: 'Nytt moment',
-    gradingByStage: { 'F-3':'FORBJUDET', '4-6':'ALLOWED_LIMITED', '7-9':'OBLIGATORISKT' }
+    gradingByStage: { '1-3':'FORBJUDET', '4-6':'ALLOWED_LIMITED', '7-9':'OBLIGATORISKT' }
   };
   assignments.push(a); renderAssignments(); renderPreview();
 }
 
 function renderAssignments(){
   const stageFilter = $('#ccStageFilter')?.value || '';
-  const stageKey = FILTER_TO_STAGE_KEY[stageFilter] || stageFilter;
+  const stageKey = stageFilter;
   const visibleStages = STAGES.filter(s=>!stageFilter || s.key === stageKey);
 
   const host = $('#assignments'); host.innerHTML = '';
@@ -249,7 +252,7 @@ function renderAssignments(){
 
 function renderPreview(){
   const stageFilter = $('#ccStageFilter')?.value || '';
-  const stageKey = FILTER_TO_STAGE_KEY[stageFilter] || stageFilter;
+  const stageKey = stageFilter;
   const visibleStages = STAGES.filter(s=>!stageFilter || s.key === stageKey);
 
   const box = $('#preview');
