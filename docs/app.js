@@ -230,6 +230,7 @@ function saveLocal() {
       subjectId: $("#subjectSelect")?.value,
       stage: $("#stageSelect")?.value,
       aias: $("#toggleAias")?.checked,
+      markCC: $("#toggleCc")?.checked,
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(s));
   } catch {}
@@ -618,7 +619,8 @@ function renderText() {
   }
   const stage = $("#stageSelect")?.value || "4-6";
   const aias = !!$("#toggleAias")?.checked;
-  const html = sanitizeHtml(buildHtml(currentSubject, stage, { aias, markCC: false }));
+  const markCC = !!$("#toggleCc")?.checked;
+  const html = sanitizeHtml(buildHtml(currentSubject, stage, { aias, markCC }));
   const out = $("#mdOut");
   if (out) out.innerHTML = html;
 }
@@ -706,6 +708,13 @@ function renderText() {
       saveLocal();
     });
   }
+  const ccTgl = $("#toggleCc");
+  if (ccTgl) {
+    ccTgl.addEventListener("change", () => {
+      renderText();
+      saveLocal();
+    });
+  }
 
   // Ladda ämnen
   await loadSubjects();
@@ -721,6 +730,7 @@ function renderText() {
   }
   if (stageSel && prev.stage) stageSel.value = prev.stage;
   if (aiasTgl && typeof prev.aias === "boolean") aiasTgl.checked = prev.aias;
+  if (ccTgl && typeof prev.markCC === "boolean") ccTgl.checked = prev.markCC;
 
   // Hämta kursplan
   if (subjSel?.value) {
