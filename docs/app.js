@@ -57,6 +57,7 @@ async function fetchApi(url, fetchOpts={}){
 
 // ---------- Ladda ämnen till dropdown ----------
 async function loadSubjects(){
+  let usedFallback = false;
   try{
     subjectsCtl?.abort();
     subjectsCtl = new AbortController();
@@ -76,19 +77,23 @@ async function loadSubjects(){
 
     setStatus(viaProxy ? 'Ämnen via API (proxy)' : 'Ämnen via API');
   }catch(e){
-    if(e.name === 'AbortError') return; // avbrutet pga nytt anrop
+    if(e.name === 'AbortError') return;
     console.warn('loadSubjects fallback:', e);
     setStatus('API misslyckades – visar lokal ämneslista');
     subjectsIndex = getLocalSubjectsFallback();
+    usedFallback = true;
   }
 
-  // Rendera dropdown
-  const sel = $('#subjectSelect');
-  sel.innerHTML = '';
-  subjectsIndex.forEach(s => sel.add(new Option(`${s.name} · ${s.id}`, s.id)));
-
-  // Välj första om inget tidigare val finns
-  if(!sel.value && subjectsIndex.length){ sel.value = subjectsIndex[0].id; }
+  try{
+    const sel = $('#subjectSelect');
+    if(!sel) return;
+    sel.innerHTML = '';
+    subjectsIndex.forEach(s => sel.add(new Option(`${s.name} · ${s.id}`, s.id)));
+    if(!sel.value && subjectsIndex.length){ sel.value = subjectsIndex[0].id; }
+    if(usedFallback) setStatus(`${$('#status')?.textContent || ''} · (${subjectsIndex.length} lokala ämnen)`);
+  }catch(err){
+    console.error('Render subjects error:', err);
+  }
 }
 
 // Full fallback-lista (kod → namn) för grundskolans ämnen
@@ -121,42 +126,49 @@ async function setSubject(subjectId){
   try{
     subjectCtl?.abort();
     subjectCtl = new AbortController();
-
     $('#mdOut')?.setAttribute('aria-busy','true');
 
     const url = `${API_BASE}/subjects/${encodeURIComponent(subjectId)}?timespan=LATEST&include=centralContents,knowledgeRequirements,purpose`;
     const {res, viaProxy} = await fetchApi(url, { signal: subjectCtl.signal });
     const data = await res.json();
 
-    const subject = Array.isArray(data?.data) ? data.data[0] : data?.data || data || {};
+    let subject = Array.isArray(data?.data) ? data.data[0] : (data?.data || data || {});
+    if (subject && subject.attributes && typeof subject.attributes === 'object') {
+      subject = { ...subject, ...subject.attributes };
+    }
 
     const purposeHtml = subject?.purpose?.htmlText || subject?.syllabusPurpose?.htmlText || subject?.syllabus?.purpose?.htmlText || subject?.purpose || subject?.syllabusPurpose || subject?.syllabus?.purpose || '';
-const ccSource = subject?.centralContents || subject?.centralContent || subject?.syllabus?.centralContents || subject?.syllabus?.centralContent || [];
-const krSource = subject?.knowledgeRequirements || subject?.syllabus?.knowledgeRequirements || [];
+    const ccSource = subject?.centralContents || subject?.centralContent || subject?.syllabus?.centralContents || subject?.syllabus?.centralContent || [];
+    const krSource = subject?.knowledgeRequirements || subject?.syllabus?.knowledgeRequirements || [];
 
-currentSubject = {
-  subjectId: subjectId,
-  title: subject?.title || subject?.name || subjectsIndex.find(s=>s.id===subjectId)?.name || 'Ämne',
-  purpose: purposeHtml,
-  centralContent: normalizeCC(ccSource),
-  knowledgeRequirements: normalizeKR(krSource)
-};
+    currentSubject = {
+      subjectId: subjectId,
+      title: subject?.title || subject?.name || subjectsIndex.find(s=>s.id===subjectId)?.name || 'Ämne',
+      purpose: purposeHtml,
+      centralContent: normalizeCC(ccSource),
+      knowledgeRequirements: normalizeKR(krSource)
+    };
+
     setStatus(viaProxy ? 'Kursplan via API (proxy)' : 'Kursplan via API');
   }catch(e){
-    if(e.name === 'AbortError') return; // nytt val snabbare – ignorera
+    if(e.name === 'AbortError') return;
     console.warn('setSubject fallback:', e);
     currentSubject = { subjectId, title:(subjectsIndex.find(s=>s.id===subjectId)?.name)||'Ämne', purpose:'', centralContent:[], knowledgeRequirements:{} };
     setStatus('API misslyckades – tom kursplan');
   }
-  renderText();
-  // Debug-info i status (antal sektioner / tecken)
-  try {
-    const pLen = (currentSubject.purpose||'').length;
-    const ccLen = currentSubject.centralContent?.length || 0;
-    const krLen = Object.keys(currentSubject.knowledgeRequirements||{}).length;
-    setStatus(`${$('#status').textContent} · Syfte:${pLen} tecken · CI:${ccLen} · KR:${krLen}`);
-  } catch{}
-  saveLocal();
+  try{
+    renderText();
+    // Debug-status
+    try {
+      const pLen = (currentSubject.purpose||'').length;
+      const ccLen = currentSubject.centralContent?.length || 0;
+      const krLen = Object.keys(currentSubject.knowledgeRequirements||{}).length;
+      setStatus(`${$('#status')?.textContent || ''} · Syfte:${pLen} · CI:${ccLen} · KR:${krLen}`);
+    } catch{}
+  }finally{
+    $('#mdOut')?.setAttribute('aria-busy','false');
+    saveLocal();
+  }
 }
 
 function normalizeCC(list){
@@ -181,45 +193,44 @@ function normalizeKR(list){
 // ---------- AIAS-markering ----------
 function escapeRegExp(s){ return String(s).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
 function aiasMark(text, enabled = true) {
-  if (!enabled) return text || '';
-  let t = String(text || '');
-  for (const { icon, words } of Object.values(AIAS)) {
-    for (const w of words) {
-      // Försök med Unicode-lookbehind (modernare motorer)
-      let re;
-      try {
-        re = new RegExp(`(?<!\p{L})(${escapeRegExp(w)})(?!\p{L})`, 'giu');
-      } catch {
-        // Fallback utan lookbehind (stöd för äldre motorer)
-        re = new RegExp(`(^|[^\p{L}])(${escapeRegExp(w)})(?=$|[^\p{L}])`, 'giu');
-        t = t.replace(re, `$1${icon} $2`);
-        continue;
+  try{
+    if (!enabled) return text || '';
+    let t = String(text || '');
+    for (const { icon, words } of Object.values(AIAS)) {
+      for (const w of words) {
+        // Försök modern regex
+        try {
+          const re = new RegExp(`(?<!\p{L})(${escapeRegExp(w)})(?!\p{L})`, 'giu');
+          t = t.replace(re, `${icon} $1`);
+        } catch {
+          // Fallback utan lookbehind
+          const re2 = new RegExp(`(^|[^\p{L}])(${escapeRegExp(w)})(?=$|[^\p{L}])`, 'giu');
+          t = t.replace(re2, `$1${icon} $2`);
+        }
       }
-      t = t.replace(re, `${icon} $1`);
     }
-  }
-  return t;
+    return t;
+  }catch{ return text || ''; }
 }
 
 // ---------- HTML-säkerhet ----------
 function sanitizeHtml(html) {
-  const t = document.createElement('template');
-  t.innerHTML = html;
-  // Ta bort scripts
-  t.content.querySelectorAll('script').forEach(el => el.remove());
-  // Rensa attribut
-  t.content.querySelectorAll('*').forEach(el => {
-    [...el.attributes].forEach(attr => {
-      const name = attr.name.toLowerCase();
-      const val = String(attr.value || '').trim().toLowerCase();
-      if (name.startsWith('on')) el.removeAttribute(attr.name);
-      if ((name === 'href' || name === 'src') &&
-          (val.startsWith('javascript:') || val.startsWith('data:text/html'))){
-        el.removeAttribute(attr.name);
-      }
+  try{
+    const t = document.createElement('template');
+    t.innerHTML = String(html||'');
+    t.content.querySelectorAll('script').forEach(el => el.remove());
+    t.content.querySelectorAll('*').forEach(el => {
+      [...el.attributes].forEach(attr => {
+        const name = attr.name.toLowerCase();
+        const val = String(attr.value || '').trim().toLowerCase();
+        if (name.startsWith('on')) el.removeAttribute(attr.name);
+        if ((name === 'href' || name === 'src') && (val.startsWith('javascript:') || val.startsWith('data:text/html'))){
+          el.removeAttribute(attr.name);
+        }
+      });
     });
-  });
-  return t.innerHTML;
+    return t.innerHTML;
+  }catch(e){ console.warn('sanitizeHtml error', e); return String(html||''); }
 }
 
 // Enkel escape för rubriker o.dyl.
@@ -270,17 +281,16 @@ function buildHtml(subject, stageKey, opts={aias:true}){
 
 // ---------- Rendera till <div> ----------
 function renderText() {
-  if (!currentSubject) {
-    $('#mdOut').innerHTML = '';
-    return;
-  }
-  const stage = $('#stageSelect').value;
-  const html = buildHtml(currentSubject, stage, { aias: $('#toggleAias')?.checked });
-  const safe = sanitizeHtml(html);
   const out = $('#mdOut');
-  if (out){
+  if (!currentSubject || !out) { if(out) out.innerHTML=''; return; }
+  try{
+    const stage = $('#stageSelect').value;
+    const html = buildHtml(currentSubject, stage, { aias: $('#toggleAias')?.checked });
+    const safe = sanitizeHtml(html);
     out.innerHTML = safe;
-    out.setAttribute('aria-busy','false');
+  }catch(e){
+    console.error('renderText error', e);
+    out.textContent = `${currentSubject.title || ''}`;
   }
 }
 
@@ -323,29 +333,34 @@ async function shareNative(){
 
 // ---------- Init ----------
 (async function init(){
-  // Händelser
-  $('#subjectSelect').addEventListener('change', async e=>{ await setSubject(e.target.value); });
-  $('#stageSelect').addEventListener('change', ()=>{ renderText(); saveLocal(); });
-  $('#toggleAias').addEventListener('change', ()=>{ renderText(); saveLocal(); });
-  $('#btnCopy')?.addEventListener('click', copyToClipboard);
-  $('#btnDownload')?.addEventListener('click', downloadTxt);
-  $('#btnShare')?.addEventListener('click', shareNative);
+  try{
+    $('#subjectSelect')?.addEventListener('change', async e=>{ await setSubject(e.target.value); });
+    $('#stageSelect')?.addEventListener('change', ()=>{ renderText(); saveLocal(); });
+    $('#toggleAias')?.addEventListener('change', ()=>{ renderText(); saveLocal(); });
+    $('#btnCopy')?.addEventListener('click', copyToClipboard);
+    $('#btnDownload')?.addEventListener('click', downloadTxt);
+    $('#btnShare')?.addEventListener('click', shareNative);
 
-  // Ladda ämnen
-  await loadSubjects();
+    await loadSubjects();
 
-  // Återställ tidigare val
-  const prev = loadLocal();
-  if(prev.subjectId && [...$('#subjectSelect').options].some(o=>o.value===prev.subjectId)){
-    $('#subjectSelect').value = prev.subjectId;
-  }
-  if(prev.stage) $('#stageSelect').value = prev.stage;
-  if(typeof prev.aias === 'boolean') $('#toggleAias').checked = prev.aias;
-
-  // Hämta kursplan
-  if($('#subjectSelect').value){
-    await setSubject($('#subjectSelect').value);
-  } else {
-    setStatus('Ingen ämnespost i listan');
+    const prev = loadLocal();
+    const sel = $('#subjectSelect');
+    if(sel && sel.options.length){
+      if(prev.subjectId && [...sel.options].some(o=>o.value===prev.subjectId)) sel.value = prev.subjectId;
+      if(prev.stage) $('#stageSelect').value = prev.stage;
+      if(typeof prev.aias === 'boolean') $('#toggleAias').checked = prev.aias;
+      await setSubject(sel.value);
+    } else {
+      setStatus('Ämneslistan är tom (fallback använd)');
+    }
+  }catch(e){
+    console.error('init error', e);
+    setStatus('Init-fel; laddar lokala ämnen');
+    subjectsIndex = getLocalSubjectsFallback();
+    const sel = $('#subjectSelect');
+    if(sel){
+      sel.innerHTML=''; subjectsIndex.forEach(s=> sel.add(new Option(`${s.name} · ${s.id}`, s.id)));
+      await setSubject(sel.value);
+    }
   }
 })();
