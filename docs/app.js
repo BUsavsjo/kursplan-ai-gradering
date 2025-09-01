@@ -129,7 +129,7 @@ async function setSubject(subjectId){
     currentSubject = {
       subjectId: subjectId,
       title: subject?.title || subject?.name || subjectsIndex.find(s=>s.id===subjectId)?.name || 'Ämne',
-      purpose: subject?.purpose || subject?.syllabusPurpose || '',
+      purpose: subject?.purpose?.htmlText || subject?.purpose || subject?.syllabusPurpose?.htmlText || subject?.syllabusPurpose || '',
       centralContent: normalizeCC(subject?.centralContents || subject?.centralContent || []),
       knowledgeRequirements: normalizeKR(subject?.knowledgeRequirements || [])
     };
@@ -146,15 +146,18 @@ async function setSubject(subjectId){
 
 function normalizeCC(list){
   if(!Array.isArray(list)) return [];
-  return list.map((x,i)=>({ id: x.year || x.id || `CC${i+1}`, text: x.text || '' }))
-             .filter(x=> (x.text||'').trim() !== '');
+  return list.map((x,i)=>({
+    id: x.year || x.id || `CC${i+1}`,
+    text: x.htmlText || x.text || ''
+  }))
+  .filter(x=> (x.text||'').trim() !== '');
 }
 function normalizeKR(list){
   if(!Array.isArray(list)) return {};
   const out = {};
   list.forEach((k,i)=>{
     const key = [k.year, k.gradeStep].filter(Boolean).join(' · ') || `KR${i+1}`;
-    out[key] = k.text || '';
+    out[key] = k.htmlText || k.text || '';
   });
   return out;
 }
