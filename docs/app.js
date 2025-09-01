@@ -2,21 +2,23 @@
 
 const API_BASE = "https://api.skolverket.se/syllabus/v1";
 
-// AIAS-lexikon
-// AIAS-lexikon (samlad version för flera ämnen)
+//
+// AIAS-lexikon (samlad & utökad för flera ämnen)
+// Ordningen är viktig: fraser först, sedan enskilda ord/böjningar.
 const AIAS = {
   FORBJUDET: {
     icon: '⛔',
     words: [
-      // Fraser
+      // Fraser (miniminivå)
       'enkla resonemang',
       'i huvudsak fungerande',
+      'enkla samband',
       // Enskilda ord/böjningar
       'enkla','enkel','enkelt',
       'i huvudsak',
       'delvis',
       'någon mån',
-      'översiktligt','översiktliga','översiktligtvis',
+      'översiktligt','översiktliga',
       'grundläggande',
       'exempel på','något exempel','några exempel',
       'återge','namnge','definiera'
@@ -25,24 +27,30 @@ const AIAS = {
   TILLATET: {
     icon: '✅',
     words: [
-      // Fraser
+      // Fraser (mellannivå)
       'utvecklade resonemang',
+      'relativt välgrundade',
+      'förhållandevis komplexa samband',
       // Enskilda ord/böjningar
       'beskriva','jämföra','resonera','förklara',
       'huvudsakligt',
       'detaljer','väsentliga','väsentlig',
       'tydligt','sammanhängande',
-      'relativt',
-      'fungerande',           // utan “i huvudsak”
+      'relativt','förhållandevis',
+      'fungerande',                 // utan "i huvudsak" → mellannivå
       'goda','goda kunskaper',
-      'centrala','särskilt centrala'
+      'centrala','särskilt centrala',
+      'lättillgängliga','lättillgängligt'
     ]
   },
   FORVANTAT: {
     icon: '📌',
     words: [
-      // Fraser
+      // Fraser (analysnivå)
       'dra slutsatser',
+      'ur olika perspektiv',
+      'ståndpunkter och argument',
+      'demokratins möjligheter och utmaningar',
       // Enskilda ord/böjningar
       'analysera','värdera','diskutera','reflektera',
       'utvecklat','utvecklade',
@@ -55,10 +63,11 @@ const AIAS = {
   INTEGRERAT: {
     icon: '🔗',
     words: [
-      // Fraser
+      // Fraser (hög progression)
       'välutvecklade resonemang',
       'för den framåt',
       'väl fungerande',
+      'källkritiska argument',
       // Enskilda ord/böjningar
       'kritiskt granska','problematisera','nyansera',
       'välgrundat','välgrundade',
@@ -71,6 +80,7 @@ const AIAS = {
     ]
   }
 };
+
 
 
 // State
@@ -225,17 +235,27 @@ function normalizeKR(list){
 function aiasMark(text, enabled = true) {
   if (!enabled) return text || '';
   let t = String(text || '');
+
+  // Hjälpare: escape för regex
+  function escapeRegExp(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  // Hjälpare: unicode-säkra ordgränser (inga bokstäver runt)
+  const makeRe = (w) =>
+    new RegExp(`(?<!\\p{L})(${escapeRegExp(w)})(?!\\p{L})`, 'giu');
+
+  // Kör igenom alla kategorier och ersätt ALLA träffar
   for (const { icon, words } of Object.values(AIAS)) {
     for (const w of words) {
-      const re = new RegExp(`\\b(${escapeRegExp(w)})\\b`, 'i');
-      if (re.test(t)) {
-        t = t.replace(re, `${icon} $1`);
-        break;
-      }
+      const re = makeRe(w);
+      t = t.replace(re, `${icon} $1`);
     }
   }
+
   return t;
 }
+
 function escapeRegExp(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
