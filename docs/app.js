@@ -78,7 +78,11 @@ const AIAS_SV = {
       "enkla resonemang","i huvudsak fungerande","delvis fungerande",
       "grundläggande läsförståelse","på ett enkelt sätt","någon mån",
       "enkel text","enkla texter","enkla instruktioner",
-      "namnge","återge","definiera","ljudningsstrategi","ljudning","memorera"
+      "namnge","återge","definiera","ljudningsstrategi",
+      "ljudning","memorera", "elevnära texter",
+      "vanligt förekommande ord", "vanligt förekommande texter"
+
+        
     ]
   },
   TILLATET: {
