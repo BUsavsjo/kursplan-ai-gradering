@@ -196,7 +196,7 @@ function buildHtml(subject, stageKey = '4-6', opts = { aias: true }) {
   if (subject.purpose) {
     parts.push('<h3>Syfte:</h3>');
     parts.push(
-      `<p>${escapeHtml(aiasMark(subject.purpose, opts.aias))}</p>`
+      `<p>${aiasMark(subject.purpose, opts.aias)}</p>`
     );
   }
 
@@ -209,7 +209,7 @@ function buildHtml(subject, stageKey = '4-6', opts = { aias: true }) {
     parts.push('<ul>');
     cc.forEach(c =>
       parts.push(
-        `<li>${escapeHtml(aiasMark(c.text || '', opts.aias))}</li>`
+        `<li>${aiasMark(c.text || '', opts.aias)}</li>`
       )
     );
     parts.push('</ul>');
@@ -229,9 +229,7 @@ function buildHtml(subject, stageKey = '4-6', opts = { aias: true }) {
     krEntries.forEach(([k, v]) => {
       const grade = (k.split('·')[1] || '').trim();
       parts.push(
-        `<li>${escapeHtml(
-          `${grade ? `${grade}: ` : ''}${aiasMark(String(v || ''), opts.aias)}`
-        )}</li>`
+        `<li>${grade ? `${grade}: ` : ''}${aiasMark(String(v || ''), opts.aias)}</li>`
       );
     });
     parts.push('</ul>');
