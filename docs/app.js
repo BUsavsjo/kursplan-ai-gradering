@@ -1,4 +1,8 @@
-// ------- Kursplan → HTML med AIAS-markering (uppdaterad) --------
+let subject = Array.isArray(data?.data) ? data.data[0] : (data?.data || data || {});
+// Hantera ev. "attributes"-kapsling
+if (subject && subject.attributes && typeof subject.attributes === 'object') {
+  subject = { ...subject, ...subject.attributes };
+}// ------- Kursplan → HTML med AIAS-markering (uppdaterad) --------
 
 const API_BASE = "https://api.skolverket.se/syllabus/v1";
 
@@ -126,13 +130,17 @@ async function setSubject(subjectId){
 
     const subject = Array.isArray(data?.data) ? data.data[0] : data?.data || data || {};
 
-    currentSubject = {
-      subjectId: subjectId,
-      title: subject?.title || subject?.name || subjectsIndex.find(s=>s.id===subjectId)?.name || 'Ämne',
-      purpose: subject?.purpose?.htmlText || subject?.purpose || subject?.syllabusPurpose?.htmlText || subject?.syllabusPurpose || '',
-      centralContent: normalizeCC(subject?.centralContents || subject?.centralContent || []),
-      knowledgeRequirements: normalizeKR(subject?.knowledgeRequirements || [])
-    };
+    const purposeHtml = subject?.purpose?.htmlText || subject?.syllabusPurpose?.htmlText || subject?.syllabus?.purpose?.htmlText || subject?.purpose || subject?.syllabusPurpose || subject?.syllabus?.purpose || '';
+const ccSource = subject?.centralContents || subject?.centralContent || subject?.syllabus?.centralContents || subject?.syllabus?.centralContent || [];
+const krSource = subject?.knowledgeRequirements || subject?.syllabus?.knowledgeRequirements || [];
+
+currentSubject = {
+  subjectId: subjectId,
+  title: subject?.title || subject?.name || subjectsIndex.find(s=>s.id===subjectId)?.name || 'Ämne',
+  purpose: purposeHtml,
+  centralContent: normalizeCC(ccSource),
+  knowledgeRequirements: normalizeKR(krSource)
+};
     setStatus(viaProxy ? 'Kursplan via API (proxy)' : 'Kursplan via API');
   }catch(e){
     if(e.name === 'AbortError') return; // nytt val snabbare – ignorera
@@ -141,6 +149,13 @@ async function setSubject(subjectId){
     setStatus('API misslyckades – tom kursplan');
   }
   renderText();
+  // Debug-info i status (antal sektioner / tecken)
+  try {
+    const pLen = (currentSubject.purpose||'').length;
+    const ccLen = currentSubject.centralContent?.length || 0;
+    const krLen = Object.keys(currentSubject.knowledgeRequirements||{}).length;
+    setStatus(`${$('#status').textContent} · Syfte:${pLen} tecken · CI:${ccLen} · KR:${krLen}`);
+  } catch{}
   saveLocal();
 }
 
@@ -148,7 +163,7 @@ function normalizeCC(list){
   if(!Array.isArray(list)) return [];
   return list.map((x,i)=>({
     id: x.year || x.id || `CC${i+1}`,
-    text: x.htmlText || x.text || ''
+    text: x.htmlText || x.text || x.html || ''
   }))
   .filter(x=> (x.text||'').trim() !== '');
 }
@@ -156,8 +171,9 @@ function normalizeKR(list){
   if(!Array.isArray(list)) return {};
   const out = {};
   list.forEach((k,i)=>{
-    const key = [k.year, k.gradeStep].filter(Boolean).join(' · ') || `KR${i+1}`;
-    out[key] = k.htmlText || k.text || '';
+    const key = [k.year, k.gradeStep, k.grade].filter(Boolean).join(' · ') || `KR${i+1}`;
+    const val = k.htmlText || k.text || k.html || '';
+    out[key] = val;
   });
   return out;
 }
