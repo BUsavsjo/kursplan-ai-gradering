@@ -195,10 +195,17 @@ const AIAS_EN = {
 // ---------------------------------------------------------
 function getAIAS(subjectIdOrName) {
   const s = String(subjectIdOrName || "").toUpperCase();
-  if (s.includes("MATEMATIK")) return AIAS_MA;
-  if (s.includes("ENGELSKA")) return AIAS_EN;
-  if (s.includes("SVENSKA")) return AIAS_SV;
-  // Lägg fler här (BIOLOGI → AIAS_BIO, HISTORIA → AIAS_HIS, etc.)
+
+  // Matcha både namn och ämneskoder
+  if (s.includes("MATEMATIK") || s.startsWith("GRGRMAT")) return AIAS_MA;
+  if (s.includes("ENGELSKA") || s.startsWith("GRGRENG")) return AIAS_EN;
+  if (
+    s.includes("SVENSKA") ||
+    s.startsWith("GRGRSVE") || // Svenska
+    s.startsWith("GRGRSVA")    // Svenska som andraspråk
+  )
+    return AIAS_SV;
+
   return AIAS; // fallback
 }
 
