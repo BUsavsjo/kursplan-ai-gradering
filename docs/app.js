@@ -4,10 +4,62 @@ const API_BASE = "https://api.skolverket.se/syllabus/v1";
 
 // AIAS-lexikon
 const AIAS = {
-  FORBJUDET:   { icon:'⛔', words:['återge','namnge','definiera','enkla','i huvudsak'] },
-  TILLATET:    { icon:'✅', words:['beskriva','jämföra','resonera','utvecklade'] },
-  FORVANTAT:   { icon:'📌', words:['analysera','värdera','dra slutsatser'] },
-  INTEGRERAT:  { icon:'🔗', words:['kritiskt granska','problematisera','nyansera'] }
+  FORBJUDET: {
+    icon: '⛔',
+    words: [
+      // Fraser (E-nivå / miniminivå)
+      'enkla resonemang',
+      'i huvudsak fungerande',
+      // Enskilda ord/böjningar
+      'enkla','enkel','enkelt',
+      'i huvudsak',
+      'delvis',
+      'någon mån',
+      'översiktligt',
+      'grundläggande',
+      'återge','namnge','definiera'
+    ]
+  },
+  TILLATET: {
+    icon: '✅',
+    words: [
+      // Fraser (mellannivå)
+      'utvecklade resonemang',
+      // Enskilda ord/böjningar
+      'beskriva','jämföra','resonera','förklara',
+      'huvudsakligt','detaljer',
+      'tydligt','sammanhängande',
+      'relativt',                // "relativt tydligt/sammanhängande"
+      'fungerande',             // utan "i huvudsak" → mellannivå
+      'goda'                    // t.ex. "goda kunskaper"
+    ]
+  },
+  FORVANTAT: {
+    icon: '📌',
+    words: [
+      // Fraser (analysnivå)
+      'dra slutsatser',
+      // Enskilda ord/böjningar
+      'analysera','värdera','diskutera',
+      'utvecklat',              // "diskutera utvecklat"
+      'variation','flyt',
+      'anpassat'                // "anpassat till syfte, mottagare, sammanhang"
+    ]
+  },
+  INTEGRERAT: {
+    icon: '🔗',
+    words: [
+      // Fraser (hög progression)
+      'välutvecklade resonemang',
+      'för den framåt',         // "för den framåt på ett konstruktivt sätt"
+      'väl fungerande',
+      // Enskilda ord/böjningar
+      'kritiskt granska','problematisera','nyansera',
+      'välgrundat','nyanserat',
+      'välutvecklat','konstruktivt',
+      'mycket goda'            // t.ex. "mycket goda kunskaper"
+    ]
+  }
 };
 
 // State
