@@ -17,7 +17,7 @@
     footer{padding:16px;color:#555}
     .badge{display:inline-block;border:1px solid var(--border);border-radius:999px;padding:2px 8px;background:#fff}
     /* Läs-vy */
-    .output{background:var(--card);border:1px solid #ddd;border-radius:10px;padding:16px;white-space:pre-wrap;word-wrap:break-word}
+    .output{background:var(--card);border:1px solid #ddd;border-radius:10px;padding:16px;white-space:normal}
     .output:focus{outline:2px solid #a3d2ff}
   </style>
 </head>
@@ -54,8 +54,8 @@
       <button id="btnShare">Dela…</button>
     </div>
 
-    <!-- Läs-vy: ej redigerbar, bevarar radbrytningar -->
-    <pre id="mdOut" class="output" aria-label="Kursplan som text" tabindex="0"></pre>
+    <!-- Läs-vy: renderar HTML -->
+    <div id="mdOut" class="output" aria-label="Kursplan som text" tabindex="0"></div>
 
     <p class="muted">Tips: kopiera texten till kurs-PM/Teams/Google Classroom, eller använd “Ladda ner TXT”.</p>
   </main>
