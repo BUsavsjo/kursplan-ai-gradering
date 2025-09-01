@@ -1,4 +1,4 @@
-// ------- Minimal “Kursplan → TXT” med AIAS-markering (läs-vy via <pre>) --------
+// ------- Minimal “Kursplan → HTML” med AIAS-markering --------
 
 const API_BASE = "https://api.skolverket.se/syllabus/v1";
 
@@ -159,70 +159,117 @@ function normalizeKR(list){
 }
 
 // ---------- AIAS-markering ----------
-function aiasMark(text, enabled=true){
-  if(!enabled) return text||'';
-  let t = String(text||'');
-  for(const {icon, words} of Object.values(AIAS)){
-    for(const w of words){
+function aiasMark(text, enabled = true) {
+  if (!enabled) return text || '';
+  let t = String(text || '');
+  for (const { icon, words } of Object.values(AIAS)) {
+    for (const w of words) {
       const re = new RegExp(`\\b(${escapeRegExp(w)})\\b`, 'i');
-      if(re.test(t)){ t = t.replace(re, `${icon} $1`); break; }
+      if (re.test(t)) {
+        t = t.replace(re, `${icon} $1`);
+        break;
+      }
     }
   }
   return t;
 }
-function escapeRegExp(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
-
-// ---------- Bygg TXT från kursplan ----------
-function buildText(subject, stageKey='4-6', opts={aias:true}){
-  const lines = [`${subject.title || 'Ämne'} – kursplan (${stageKey})`, ''];
-
-  if(subject.purpose){
-    lines.push('Syfte:');
-    lines.push(aiasMark(subject.purpose, opts.aias)); lines.push('');
-  }
-
-  const cc = (subject.centralContent||[]).filter(c=>{
-    const id = (c.id||'').trim();
-    return !['1-3','4-6','7-9'].includes(id) || id===stageKey;
-  });
-  if(cc.length){
-    lines.push(`Centralt innehåll (${stageKey}):`);
-    cc.forEach(c => lines.push(`- ${aiasMark(c.text||'', opts.aias)}`));
-    lines.push('');
-  }
-
-  const krEntries = Object.entries(subject.knowledgeRequirements||{}).filter(([k])=>{
-    const part = k.split(' · ')[0];
-    return !['1-3','4-6','7-9'].includes(part) || part===stageKey;
-  });
-  if(krEntries.length){
-    const steg = stageKey==='1-3' ? 'Åk 3' : stageKey==='4-6' ? 'Åk 6' : 'Åk 9';
-    lines.push(`Kunskapskrav (${steg}, utdrag):`);
-    krEntries.forEach(([k,v])=>{
-      const grade = (k.split('·')[1] || '').trim();
-      lines.push(`- ${grade?`${grade}: `:''}${aiasMark(String(v||''), opts.aias)}`);
-    });
-    lines.push('');
-  }
-
-  return lines.join('\n');
+function escapeRegExp(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// ---------- Rendera till <pre> ----------
-function renderText(){
-  if(!currentSubject){ $('#mdOut').textContent = ''; return; }
+// ---------- Bygg HTML från kursplan ----------
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function buildHtml(subject, stageKey = '4-6', opts = { aias: true }) {
+  const parts = [];
+  parts.push(
+    `<h2>${escapeHtml(`${subject.title || 'Ämne'} – kursplan (${stageKey})`)}</h2>`
+  );
+
+  if (subject.purpose) {
+    parts.push('<h3>Syfte:</h3>');
+    parts.push(
+      `<p>${escapeHtml(aiasMark(subject.purpose, opts.aias))}</p>`
+    );
+  }
+
+  const cc = (subject.centralContent || []).filter(c => {
+    const id = (c.id || '').trim();
+    return !['1-3', '4-6', '7-9'].includes(id) || id === stageKey;
+  });
+  if (cc.length) {
+    parts.push(`<h3>Centralt innehåll (${stageKey}):</h3>`);
+    parts.push('<ul>');
+    cc.forEach(c =>
+      parts.push(
+        `<li>${escapeHtml(aiasMark(c.text || '', opts.aias))}</li>`
+      )
+    );
+    parts.push('</ul>');
+  }
+
+  const krEntries = Object.entries(subject.knowledgeRequirements || {}).filter(
+    ([k]) => {
+      const part = k.split(' · ')[0];
+      return !['1-3', '4-6', '7-9'].includes(part) || part === stageKey;
+    }
+  );
+  if (krEntries.length) {
+    const steg =
+      stageKey === '1-3' ? 'Åk 3' : stageKey === '4-6' ? 'Åk 6' : 'Åk 9';
+    parts.push(`<h3>Kunskapskrav (${steg}, utdrag):</h3>`);
+    parts.push('<ul>');
+    krEntries.forEach(([k, v]) => {
+      const grade = (k.split('·')[1] || '').trim();
+      parts.push(
+        `<li>${escapeHtml(
+          `${grade ? `${grade}: ` : ''}${aiasMark(String(v || ''), opts.aias)}`
+        )}</li>`
+      );
+    });
+    parts.push('</ul>');
+  }
+
+  return parts.join('');
+}
+
+function sanitizeHtml(html) {
+  const t = document.createElement('template');
+  t.innerHTML = html;
+  t.content.querySelectorAll('script').forEach(el => el.remove());
+  t.content.querySelectorAll('*').forEach(el => {
+    [...el.attributes].forEach(attr => {
+      if (attr.name.startsWith('on')) el.removeAttribute(attr.name);
+    });
+  });
+  return t.innerHTML;
+}
+
+// ---------- Rendera till <div> ----------
+function renderText() {
+  if (!currentSubject) {
+    $('#mdOut').innerHTML = '';
+    return;
+  }
   const stage = $('#stageSelect').value;
   const aias = $('#toggleAias').checked;
-  const txt = buildText(currentSubject, stage, {aias});
-  $('#mdOut').textContent = txt; // <pre> visar ren text
+  const html = sanitizeHtml(buildHtml(currentSubject, stage, { aias }));
+  $('#mdOut').innerHTML = html;
 }
 
 // ---------- Export / kopiera / dela ----------
-$('#btnDownload').addEventListener('click', ()=>{
-  if(!currentSubject) return;
+$('#btnDownload').addEventListener('click', () => {
+  if (!currentSubject) return;
   const stage = $('#stageSelect').value;
-  const txt = buildText(currentSubject, stage, {aias: $('#toggleAias').checked});
-  const blob = new Blob([txt], {type:'text/plain'});
+  const txt = $('#mdOut').textContent || '';
+  const blob = new Blob([txt], { type: 'text/plain' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `${(currentSubject.title||'amne').toLowerCase()}-${stage}.txt`;
