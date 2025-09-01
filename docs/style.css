@@ -174,3 +174,9 @@ button.secondary:hover{background:color-mix(in oklab, var(--accent) 8%, transpar
   border-radius: 3px;
 }
 
+
+
+/* === AI-hints block (AI-stöd per nivå) === */
+.ai-hints h3 { margin: .2rem 0 .4rem; }
+.ai-help { margin: 0; padding-left: 1.2rem; }
+.ai-help li { margin: .2rem 0; }

@@ -3,7 +3,7 @@
 const API_BASE = "https://api.skolverket.se/syllabus/v1";
 
 //
-// AIAS-lexikon (samlad & utökad för flera ämnen)
+// AIAS-lexikon (allmän version för grundskolans kursplaner)
 // Ordningen är viktig: fraser först, sedan enskilda ord/böjningar.
 const AIAS = {
   FORBJUDET: {
@@ -21,9 +21,11 @@ const AIAS = {
       'översiktligt','översiktliga',
       'grundläggande',
       'exempel på','något exempel','några exempel',
-      'återge','namnge','definiera'
+      'återge','namnge','definiera',
+      'memorera'   // flyttad hit → ses som grundkunskap i de flesta kursplaner
     ]
   },
+
   TILLATET: {
     icon: '✅',
     words: [
@@ -37,12 +39,23 @@ const AIAS = {
       'detaljer','väsentliga','väsentlig',
       'tydligt','sammanhängande',
       'relativt','förhållandevis',
-      'fungerande',                 // utan "i huvudsak" → mellannivå
+      'fungerande',
       'goda','goda kunskaper',
       'centrala','särskilt centrala',
-      'lättillgängliga','lättillgängligt'
+      'lättillgängliga','lättillgängligt',
+      // Språk/estetiska/ämnesövergripande
+      'kommunicera','kommunikation',
+      'tolka',
+      'hantera','hantering',
+      'delta','deltar',
+      'träna','träning',
+      'samarbeta','samverka',
+      'genomföra','genomför',
+      'använda','använder',
+      'spela','sjunga','lyssna'
     ]
   },
+
   FORVANTAT: {
     icon: '📌',
     words: [
@@ -52,14 +65,24 @@ const AIAS = {
       'ståndpunkter och argument',
       'demokratins möjligheter och utmaningar',
       // Enskilda ord/böjningar
-      'analysera','värdera','diskutera','reflektera',
+      'analysera','värdera','diskutera',
+      'reflektera','reflektion',
       'utvecklat','utvecklade',
       'variation','varierat',
       'flyt',
       'anpassat','anpassning',
-      'kontinuitet','förändring'
+      'kontinuitet','förändring',
+      // Skapande, metod & undersökande
+      'improvisera','gestalta','gestaltningsförmåga',
+      'skapa','skapande',
+      'utforma','utformande',
+      'konstruera','designa',
+      'undersöka','observera','dokumentera',
+      'utforska','experimentera',
+      'planera','strategi','strategier'
     ]
   },
+
   INTEGRERAT: {
     icon: '🔗',
     words: [
@@ -76,10 +99,16 @@ const AIAS = {
       'konstruktivt',
       'mycket goda','mycket goda kunskaper',
       'helhet',
-      'trovärdighet','relevans'
+      'trovärdighet','relevans',
+      // Estetiska och tekniska ämnen på hög nivå
+      'komponera','arrangera',
+      'utvärdera','värdera',
+      'förfina','fördjupa',
+      'rolltolkning','gestaltningsdjup'
     ]
   }
 };
+
 
 // -------------------------------------------------------------
 // State
