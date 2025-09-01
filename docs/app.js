@@ -231,9 +231,9 @@ function normalizeKR(list){
 
   const toBand = (y) => {
     const s = String(y||'').toLowerCase();
-    if (/1\s*[-–]\s*3|åk\s*3|årskurs\s*3/.test(s)) return '1-3';
-    if (/4\s*[-–]\s*6|åk\s*6|årskurs\s*6/.test(s)) return '4-6';
-    if (/7\s*[-–]\s*9|åk\s*9|årskurs\s*9/.test(s)) return '7-9';
+    if (/1\s*[-–]\s*3|åk\s*3|årskurs\s*3|^3$/.test(s)) return '1-3';
+    if (/4\s*[-–]\s*6|åk\s*6|årskurs\s*6|^6$/.test(s)) return '4-6';
+    if (/7\s*[-–]\s*9|åk\s*9|årskurs\s*9|^9$/.test(s)) return '7-9';
     // API kan ibland redan ge bandet direkt
     if (/^1-3$|^4-6$|^7-9$/.test(s)) return s;
     return '';
