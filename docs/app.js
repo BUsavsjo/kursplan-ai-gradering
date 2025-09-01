@@ -1,321 +1,329 @@
-// ---- UI-konstanter ----
-const STAGES = [{key:'F-3',label:'F–3'},{key:'4-6',label:'4–6'},{key:'7-9',label:'7–9'}];
-const GRADES = [
-  {key:'FORBJUDET',label:'Förbjudet',icon:'⛔'},
-  {key:'ALLOWED_LIMITED',label:'Begränsat',icon:'◑'},
-  {key:'TILLATET',label:'Tillåtet',icon:'✅'},
-  {key:'OBLIGATORISKT',label:'Obligatoriskt',icon:'📌'}
-];
-const CC_STAGE_LABELS = { '1-3':'lågstadiet', '4-6':'mellanstadiet', '7-9':'högstadiet' };
-const CC_STAGE_ORDER = Object.keys(CC_STAGE_LABELS);
-const GRADE_ORDER = GRADES.reduce((m,g,i)=>{ m[g.key]=i; return m; },{});
+// ------- Minimal “Kursplan → HTML” med AIAS-markering --------
 
-// ---- State ----
-let subjectsIndex = [];
-let currentSubject = null;
-let assignments = [];
-let useApi = true;
+const API_BASE = "https://api.skolverket.se/syllabus/v1";
 
-const $ = s => document.querySelector(s);
-const escapeHTML = s => String(s).replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
-const escapeAttr = s => escapeHTML(s).replace(/"/g,'&quot;');
-const uid = () => 'id-' + Math.random().toString(36).slice(2,8);
+// AIAS-lexikon
+const AIAS = {
+  FORBJUDET:   { icon:'⛔', words:['återge','namnge','definiera','enkla','i huvudsak'] },
+  TILLATET:    { icon:'✅', words:['beskriva','jämföra','resonera','utvecklade'] },
+  FORVANTAT:   { icon:'📌', words:['analysera','värdera','dra slutsatser'] },
+  INTEGRERAT:  { icon:'🔗', words:['kritiskt granska','problematisera','nyansera'] }
+};
 
-async function init(){
-  // switches
-  $('#useApiToggle').addEventListener('change', e=>{
-    useApi = e.target.checked;
-    const sel = $('#subjectSelect');
-    if(sel.value) setSubjectById(sel.value); // reload aktuellt ämne med nuvarande läge
-  });
+// State
+let subjectsIndex = [];      // [{id,name}]
+let currentSubject = null;   // {subjectId,title,purpose,centralContent:[{id,text}],knowledgeRequirements:{key:text}}
 
-  // knappar
-  $('#btnExportJSON').addEventListener('click', exportJSON);
-  $('#btnExportMD').addEventListener('click', exportMD);
-  $('#btnExportDOCX').addEventListener('click', exportDOCX);
-  $('#btnExportPDF').addEventListener('click', exportPDF);
-  $('#btnAdd').addEventListener('click', addAssignment);
-  $('#ccStageFilter').addEventListener('change', renderSubject);
-  $('#ccSort').addEventListener('change', renderSubject);
-  $('#assignStageSort').addEventListener('change', ()=>{ renderAssignments(); renderPreview(); });
+// Helpers
+const $ = sel => document.querySelector(sel);
+const SAVE_KEY = 'kpai:txt:v1';
 
-  // ladda ämneslista lokalt
-  await loadIndex();
-  populateDropdown();
-
-  // välj första ämnet direkt
-  const sel = $('#subjectSelect');
-  if(sel.value) await setSubjectById(sel.value);
-  else $('#status').textContent = 'Ingen kurs funnen.';
-}
-
-async function loadIndex(){
+function setStatus(msg){ $('#status').textContent = msg || ''; }
+function saveLocal(){
   try{
-    const res = await fetch('./subjects/index.json');
-    if(!res.ok) throw new Error('index.json saknas');
-    subjectsIndex = await res.json();
-  }catch(e){
-    subjectsIndex = [
-      { id:'GRGRSVE07', title:'Svenska', file:'SV.json' },
-      { id:'GRGRTEK07', title:'Teknik',  file:'TEK.json' }
-    ];
-  }
+    const s = {
+      subjectId: $('#subjectSelect')?.value,
+      stage: $('#stageSelect')?.value,
+      aias: $('#toggleAias')?.checked
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(s));
+  }catch{}
+}
+function loadLocal(){
+  try { return JSON.parse(localStorage.getItem(SAVE_KEY) || '{}'); }
+  catch { return {}; }
 }
 
-function populateDropdown(){
-  const sel = $('#subjectSelect');
-  sel.innerHTML = '';
-  subjectsIndex.forEach(s => sel.add(new Option(`${s.title} · ${s.id}`, s.id)));
-  sel.onchange = () => setSubjectById(sel.value);
-  if(subjectsIndex.length>0) sel.value = subjectsIndex[0].id;
-}
-
-// Försök hämta med CORS, vid fel testa via öppen proxy
+// ---------- Nätverk: API med proxy-fallback ----------
 async function fetchApi(url){
   try{
-    const res = await fetch(url, { mode: 'cors' });
+    const res = await fetch(url, {mode:'cors'});
     if(!res.ok) throw new Error('HTTP '+res.status);
     return {res, viaProxy:false};
   }catch(e){
-    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-    const res = await fetch(proxyUrl);
+    const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+    const res = await fetch(proxy);
     if(!res.ok) throw new Error('Proxy HTTP '+res.status);
     return {res, viaProxy:true};
   }
 }
 
-async function setSubjectById(subjectId){
-  const meta = subjectsIndex.find(s => s.id === subjectId);
-  assignments = []; // nollställ vid ämnesbyte
-  if(!meta){ currentSubject=null; renderAll(); return; }
-
-  $('#status').textContent = useApi ? 'Hämtar från API…' : 'Läser lokalt…';
-
-  // 1) API-försök
-  if(useApi){
-    try{
-      const apiBase = $('#apiBase').value.trim().replace(/\/+$/,'');
-      const url = `${apiBase}/subjects/${encodeURIComponent(subjectId)}?timespan=LATEST&include=centralContents,knowledgeRequirements,purpose`;
-      const {res, viaProxy} = await fetchApi(url); // hantera CORS via proxy vid behov
-      const data = await res.json();
-      const subj = data.subject ?? data;
-
-      // mappa fält från API
-      currentSubject = {
-        subjectId: subj.subjectId || subj.id || subjectId,
-        title: subj.name || meta.title,
-        purpose: subj.purpose || '',
-        centralContent: normalizeCentralContentFromApi(subj.centralContents),
-        knowledgeRequirements: normalizeKR(subj.knowledgeRequirements)
-      };
-
-      $('#status').textContent = viaProxy ? 'Kursplan via API (proxy)' : 'Kursplan från API';
-      renderAll();
-      return;
-    }catch(e){
-      $('#status').textContent = 'API misslyckades – använder lokal fil';
-    }
-  }
-
-  // 2) Fallback: lokal fil
+// ---------- Ladda ämnen till dropdown ----------
+async function loadSubjects(){
+  setStatus('Hämtar ämnen…');
   try{
-    const r = await fetch(`./subjects/${meta.file}`);
-    if(!r.ok) throw new Error('Lokal fil saknas: '+meta.file);
-    currentSubject = await r.json();
-    $('#status').textContent = 'Kursplan från lokal fil';
+    const {res, viaProxy} = await fetchApi(`${API_BASE}/subjects`);
+    const raw = await res.json();
+
+    // Tillåt olika format: ren array, {items:[]}, {subjects:[]}
+    const arr =
+      Array.isArray(raw) ? raw :
+      Array.isArray(raw?.items) ? raw.items :
+      Array.isArray(raw?.subjects) ? raw.subjects :
+      [];
+
+    if(!arr.length) throw new Error('Tom ämneslista från API');
+
+    subjectsIndex = arr
+      .map(x=>({ id: x.id || x.subjectId, name: x.name || x.title }))
+      .filter(s=> s.id && s.name)
+      .sort((a,b)=> a.name.localeCompare(b.name,'sv'));
+
+    if(!subjectsIndex.length) throw new Error('Inga giltiga poster (saknar id/name)');
+
+    setStatus(viaProxy ? 'Ämnen via API (proxy)' : 'Ämnen via API');
   }catch(e){
-    currentSubject = { subjectId: meta.id, title: meta.title, purpose:'', centralContent:[], knowledgeRequirements:{} };
-    $('#status').textContent = 'Varken API eller lokal fil hittades';
+    console.warn('loadSubjects fallback:', e);
+    setStatus('API misslyckades – visar lokal ämneslista');
+    subjectsIndex = getLocalSubjectsFallback();
   }
-  renderAll();
+
+  // Rendera dropdown
+  const sel = $('#subjectSelect');
+  sel.innerHTML = '';
+  subjectsIndex.forEach(s => sel.add(new Option(`${s.name} · ${s.id}`, s.id)));
+
+  // Välj första om inget tidigare val finns
+  if(!sel.value && subjectsIndex.length){ sel.value = subjectsIndex[0].id; }
 }
 
-function normalizeCentralContent(ccRaw){
-  if(!ccRaw) return [];
-  // tillåt både {id,text} och strängar
-  return ccRaw.map((cc,i)=>{
-    if(typeof cc === 'string') return { id: `CC${i+1}`, text: cc };
-    return { id: cc.id || `CC${i+1}`, text: cc.text || '' };
-  });
+// Full fallback-lista (kod → namn) för grundskolans ämnen
+function getLocalSubjectsFallback(){
+  const S = [
+    ['GRGRBIL01','Bild'],
+    ['GRGRBIO01','Biologi'],
+    ['GRGRDAN01','Dans'],
+    ['GRGRENG01','Engelska'],
+    ['GRGRFYS01','Fysik'],
+    ['GRGRGEO01','Geografi'],
+    ['GRGRHKK01','Hem- och konsumentkunskap'],
+    ['GRGRHIS01','Historia'],
+    ['GRGRIDR01','Idrott och hälsa'],
+    ['GRGRJUD01','Judiska studier'],
+    ['GRGRKEM01','Kemi'],
+    ['GRGRMAT01','Matematik'],
+    // Moderna språk/Modersmål kräver språkkoder → utelämnas i fallback
+    ['GRGRMUS01','Musik'],
+    ['GRGRREL01','Religionskunskap'],
+    ['GRGRSAM01','Samhällskunskap'],
+    ['GRGRSLJ01','Slöjd'],
+    ['GRGRSVE01','Svenska'],
+    ['GRGRSVA01','Svenska som andraspråk'],
+    ['GRGRTSP01','Teckenspråk för hörande'],
+    ['GRGRTEK01','Teknik'],
+    ['GRSMSMI01','Samiska'],
+  ];
+  return S.map(([id,name])=>({id,name}));
 }
 
-function normalizeCentralContentFromApi(ccList){
-  if(!Array.isArray(ccList)) return [];
-  return ccList.map((item, i) => ({
-    id: item.year || `CC${i+1}`,
-    text: item.text || ''
-  })).filter(x => x.text.trim() !== '');
+// ---------- Hämta kursplan-detaljer för valt ämne ----------
+async function setSubject(subjectId){
+  if(!subjectId) return;
+  setStatus('Hämtar kursplan…');
+  try{
+    const url = `${API_BASE}/subjects/${encodeURIComponent(subjectId)}?timespan=LATEST&include=centralContents,knowledgeRequirements,purpose`;
+    const {res, viaProxy} = await fetchApi(url);
+    const data = await res.json();
+    const subj = data.subject ?? data;
+
+    currentSubject = {
+      subjectId: subj.subjectId || subj.id || subjectId,
+      title: subj.name || (subjectsIndex.find(x=>x.id===subjectId)?.name) || 'Ämne',
+      purpose: subj.purpose || '',
+      centralContent: normalizeCC(subj.centralContents),
+      knowledgeRequirements: normalizeKR(subj.knowledgeRequirements)
+    };
+    setStatus(viaProxy ? 'Kursplan via API (proxy)' : 'Kursplan via API');
+  }catch(e){
+    console.warn('setSubject fallback:', e);
+    currentSubject = { subjectId:subjectId, title:(subjectsIndex.find(x=>x.id===subjectId)?.name)||'Ämne', purpose:'', centralContent:[], knowledgeRequirements:{} };
+    setStatus('API misslyckades – tom kursplan');
+  }
+  renderText();
+  saveLocal();
 }
 
-function normalizeKR(krList){
-  if(!Array.isArray(krList)) return {};
+function normalizeCC(list){
+  if(!Array.isArray(list)) return [];
+  return list.map((x,i)=>({ id: x.year || x.id || `CC${i+1}`, text: x.text || '' }))
+             .filter(x=> (x.text||'').trim() !== '');
+}
+function normalizeKR(list){
+  if(!Array.isArray(list)) return {};
   const out = {};
-  krList.forEach((k,i)=>{
+  list.forEach((k,i)=>{
     const key = [k.year, k.gradeStep].filter(Boolean).join(' · ') || `KR${i+1}`;
     out[key] = k.text || '';
   });
   return out;
 }
 
-// ---- render ----
-function renderAll(){ renderSubject(); renderAssignments(); renderPreview(); }
+// ---------- AIAS-markering ----------
+function aiasMark(text, enabled = true) {
+  if (!enabled) return text || '';
+  let t = String(text || '');
+  for (const { icon, words } of Object.values(AIAS)) {
+    for (const w of words) {
+      const re = new RegExp(`\\b(${escapeRegExp(w)})\\b`, 'i');
+      if (re.test(t)) {
+        t = t.replace(re, `${icon} $1`);
+        break;
+      }
+    }
+  }
+  return t;
+}
+function escapeRegExp(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
-function renderSubject(){
-  $('#subjectTitle').textContent = `Ämnesöversikt: ${currentSubject?.title || ''}`;
-  $('#subjectPurpose').innerHTML = currentSubject?.purpose
-    ? `<div class="block"><h4>Syfte</h4><div>${currentSubject.purpose}</div></div>` : '';
+// ---------- Bygg HTML från kursplan ----------
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
-  const stageFilter = $('#ccStageFilter')?.value || '';
-  const stageSort = $('#ccSort')?.value || '';
-  const ccTitle = stageFilter && CC_STAGE_LABELS[stageFilter]
-    ? `Centralt innehåll för ${CC_STAGE_LABELS[stageFilter]}`
-    : 'Centralt innehåll';
-  $('#ccTitle').textContent = ccTitle;
+function buildHtml(subject, stageKey = '4-6', opts = { aias: true }) {
+  const parts = [];
+  parts.push(
+    `<h2>${escapeHtml(`${subject.title || 'Ämne'} – kursplan (${stageKey})`)}</h2>`
+  );
 
-  const cc = $('#ccList'); cc.innerHTML = '';
-  const knownStageIds = CC_STAGE_ORDER;
-  let items = [...(currentSubject?.centralContent || [])];
-  if(stageSort){
-    const dir = stageSort==='desc' ? -1 : 1;
-    items.sort((a,b)=>{
-      const ai = knownStageIds.indexOf(a.id);
-      const bi = knownStageIds.indexOf(b.id);
-      return ((ai===-1?99:ai)-(bi===-1?99:bi))*dir;
+  if (subject.purpose) {
+    parts.push('<h3>Syfte:</h3>');
+    parts.push(
+      `<p>${escapeHtml(aiasMark(subject.purpose, opts.aias))}</p>`
+    );
+  }
+
+  const cc = (subject.centralContent || []).filter(c => {
+    const id = (c.id || '').trim();
+    return !['1-3', '4-6', '7-9'].includes(id) || id === stageKey;
+  });
+  if (cc.length) {
+    parts.push(`<h3>Centralt innehåll (${stageKey}):</h3>`);
+    parts.push('<ul>');
+    cc.forEach(c =>
+      parts.push(
+        `<li>${escapeHtml(aiasMark(c.text || '', opts.aias))}</li>`
+      )
+    );
+    parts.push('</ul>');
+  }
+
+  const krEntries = Object.entries(subject.knowledgeRequirements || {}).filter(
+    ([k]) => {
+      const part = k.split(' · ')[0];
+      return !['1-3', '4-6', '7-9'].includes(part) || part === stageKey;
+    }
+  );
+  if (krEntries.length) {
+    const steg =
+      stageKey === '1-3' ? 'Åk 3' : stageKey === '4-6' ? 'Åk 6' : 'Åk 9';
+    parts.push(`<h3>Kunskapskrav (${steg}, utdrag):</h3>`);
+    parts.push('<ul>');
+    krEntries.forEach(([k, v]) => {
+      const grade = (k.split('·')[1] || '').trim();
+      parts.push(
+        `<li>${escapeHtml(
+          `${grade ? `${grade}: ` : ''}${aiasMark(String(v || ''), opts.aias)}`
+        )}</li>`
+      );
     });
+    parts.push('</ul>');
   }
-  items.forEach(c=>{
-    const isStage = knownStageIds.includes(c.id);
-    if(stageFilter && isStage && c.id !== stageFilter) return;
-    const li = document.createElement('li');
-    li.innerHTML = `<span class="badge">${c.id}</span> ${c.text}`;
-    cc.appendChild(li);
-  });
 
-  const kr = $('#krList'); kr.innerHTML = '';
-  Object.entries(currentSubject?.knowledgeRequirements || {}).forEach(([k,v])=>{
-    const li = document.createElement('li');
-    li.innerHTML = `<span class="badge">${k}</span> ${v}`;
-    kr.appendChild(li);
-  });
+  return parts.join('');
 }
 
-function addAssignment(){
-  const a = {
-    id: uid(),
-    name: 'Nytt moment',
-    stage: STAGES[0].key,
-    grade: GRADES[0].key
-  };
-  assignments.push(a); renderAssignments(); renderPreview();
-}
-
-function renderAssignments(){
-  const host = $('#assignments'); host.innerHTML = '';
-  const stageSort = $('#assignStageSort')?.value || '';
-  let list = [...assignments];
-  if(stageSort){
-    list = list.filter(a=>a.stage===stageSort);
-    list.sort((a,b)=>(GRADE_ORDER[a.grade] ?? -1) - (GRADE_ORDER[b.grade] ?? -1));
-  }
-  if(list.length===0){
-    host.innerHTML = stageSort
-      ? '<div class="muted tiny">Inga moment för valt stadie.</div>'
-      : '<div class="muted tiny">Inga moment ännu. Klicka ”Nytt moment”.</div>';
-    return;
-  }
-  list.forEach(a=>{
-    const wrap = document.createElement('div'); wrap.className='assign';
-    wrap.innerHTML = `
-      <div class="row">
-        <input value="${escapeAttr(a.name)}"/>
-        <select data-stage="${a.id}">
-          ${STAGES.map(s=>`<option value="${s.key}" ${a.stage===s.key?'selected':''}>${s.label}</option>`).join('')}
-        </select>
-        <button data-del="${a.id}">Ta bort</button>
-      </div>
-      <div class="row">
-        ${GRADES.map(g=>`
-          <span class="badge ${a.grade===g.key?'selected':''}" data-set="${a.id}|${g.key}">${g.icon} ${g.label}</span>
-        `).join(' ')}
-      </div>
-    `;
-    host.appendChild(wrap);
-
-    wrap.querySelector('input').addEventListener('input', ev=>{ a.name = ev.target.value; renderPreview(); });
-    wrap.querySelector(`[data-del="${a.id}"]`).addEventListener('click', ()=>{ assignments = assignments.filter(x=>x.id!==a.id); renderAssignments(); renderPreview(); });
-    wrap.querySelector(`select[data-stage="${a.id}"]`).addEventListener('change', ev=>{ a.stage = ev.target.value; renderAssignments(); renderPreview(); });
-    wrap.querySelectorAll('[data-set]').forEach(el=>{
-      el.addEventListener('click', ()=>{
-        const [id,grade] = el.getAttribute('data-set').split('|');
-        if(id===a.id){ a.grade=grade; renderAssignments(); renderPreview(); }
-      });
+function sanitizeHtml(html) {
+  const t = document.createElement('template');
+  t.innerHTML = html;
+  t.content.querySelectorAll('script').forEach(el => el.remove());
+  t.content.querySelectorAll('*').forEach(el => {
+    [...el.attributes].forEach(attr => {
+      if (attr.name.startsWith('on')) el.removeAttribute(attr.name);
     });
   });
+  return t.innerHTML;
 }
 
-function renderPreview(){
-  const box = $('#preview');
-  const stageSort = $('#assignStageSort')?.value || '';
-  let list = [...assignments];
-  if(stageSort){
-    list = list.filter(a=>a.stage===stageSort);
-    list.sort((a,b)=>(GRADE_ORDER[a.grade] ?? -1) - (GRADE_ORDER[b.grade] ?? -1));
-  }
-  if(list.length===0){
-    box.textContent = stageSort
-      ? 'Inga moment för valt stadie.'
-      : 'Lägg till ett moment och sätt gradering per stadie.';
-    box.classList.add('muted');
+// ---------- Rendera till <div> ----------
+function renderText() {
+  if (!currentSubject) {
+    $('#mdOut').innerHTML = '';
     return;
   }
-  box.classList.remove('muted');
-  const header = stageSort
-    ? `AI-gradering för ${STAGES.find(s=>s.key===stageSort)?.label || stageSort}`
-    : 'AI-gradering per stadie';
-  const out = [`# ${currentSubject?.title || 'Ämne'} – ${header}`];
-  list.forEach((a,i)=>{
-    const stageLabel = STAGES.find(s=>s.key===a.stage)?.label || a.stage;
-    const g = GRADES.find(x=>x.key===a.grade);
-    out.push(`\n## ${i+1}. ${a.name}`);
-    out.push(`- ${stageLabel}: ${g.icon} ${g.label}`);
-  });
-  box.textContent = out.join('\n');
+  const stage = $('#stageSelect').value;
+  const aias = $('#toggleAias').checked;
+  const html = sanitizeHtml(buildHtml(currentSubject, stage, { aias }));
+  $('#mdOut').innerHTML = html;
 }
 
-// ---- export ----
-function exportJSON(){
-  const payload = {
-    subjectId: currentSubject?.subjectId,
-    title: currentSubject?.title,
-    centralContentRefs: (currentSubject?.centralContent || []).map(c=>c.id),
-    knowledgeReqRefs: Object.keys(currentSubject?.knowledgeRequirements || {}),
-    assignments
-  };
-  download('syllabus-analys.json', JSON.stringify(payload, null, 2), 'application/json');
-}
-function exportMD(){
-  download('syllabus-instruktioner.md', $('#preview').textContent || '', 'text/markdown');
-}
-function exportDOCX(){
-  const html = `<pre>${escapeHTML($('#preview').textContent || '')}</pre>`;
-  const blob = window.htmlDocx ? window.htmlDocx.asBlob(html) : new Blob([$('#preview').textContent || '']);
-  download('syllabus-instruktioner.docx', blob, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-}
-function exportPDF(){
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  const text = $('#preview').textContent || '';
-  const lines = doc.splitTextToSize(text, 180);
-  doc.text(lines, 10, 10);
-  const blob = doc.output('blob');
-  download('syllabus-instruktioner.pdf', blob, 'application/pdf');
-}
-function download(filename, data, type){
-  const blob = data instanceof Blob ? data : new Blob([data], {type});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download=filename; a.click();
-  URL.revokeObjectURL(url);
-}
+// ---------- Export / kopiera / dela ----------
+$('#btnDownload').addEventListener('click', () => {
+  if (!currentSubject) return;
+  const stage = $('#stageSelect').value;
+  const txt = $('#mdOut').textContent || '';
+  const blob = new Blob([txt], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${(currentSubject.title||'amne').toLowerCase()}-${stage}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
 
-// start
-init();
+$('#btnCopy').addEventListener('click', async ()=>{
+  try{
+    const txt = $('#mdOut').textContent || '';
+    await navigator.clipboard.writeText(txt);
+    setStatus('Text kopierad ✔');
+    setTimeout(()=>setStatus(''),1200);
+  }catch{ setStatus('Kunde inte kopiera'); }
+});
+
+$('#btnShare').addEventListener('click', async ()=>{
+  const title = currentSubject?.title || 'Kursplan';
+  const text = $('#mdOut').textContent || '';
+  if(navigator.share){
+    try{
+      await navigator.share({ title: `${title} – kursplan`, text });
+    }catch(e){ /* avbrutet */ }
+  }else{
+    try{
+      await navigator.clipboard.writeText(text);
+      setStatus('Kunde inte öppna delning – kopierade istället ✔');
+      setTimeout(()=>setStatus(''),1500);
+    }catch{ setStatus('Varken dela eller kopiera fungerade'); }
+  }
+});
+
+// ---------- Init ----------
+(async function init(){
+  // Event handlers
+  $('#subjectSelect').addEventListener('change', e=>{ setSubject(e.target.value); saveLocal(); });
+  $('#stageSelect').addEventListener('change', ()=>{ renderText(); saveLocal(); });
+  $('#toggleAias').addEventListener('change', ()=>{ renderText(); saveLocal(); });
+
+  // Ladda ämnen
+  await loadSubjects();
+
+  // Återställ tidigare val
+  const prev = loadLocal();
+  if(prev.subjectId && [...$('#subjectSelect').options].some(o=>o.value===prev.subjectId)){
+    $('#subjectSelect').value = prev.subjectId;
+  }
+  if(prev.stage) $('#stageSelect').value = prev.stage;
+  if(typeof prev.aias === 'boolean') $('#toggleAias').checked = prev.aias;
+
+  // Hämta kursplan
+  if($('#subjectSelect').value){
+    await setSubject($('#subjectSelect').value);
+  } else {
+    setStatus('Ingen ämnespost i listan');
+  }
+})();

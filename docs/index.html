@@ -2,142 +2,72 @@
 <html lang="sv">
 <head>
   <meta charset="utf-8" />
-  <title>Syllabus-analys (F–3 / 4–6 / 7–9)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="./style.css" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kursplan → Text (med AIAS-markering)</title>
+  <style>
+    :root{--bg:#fafafa;--fg:#222;--muted:#666;--card:#fff;--border:#eee}
+    body{font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;margin:0;background:var(--bg);color:var(--fg)}
+    header{padding:14px 16px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    select,button,input[type="text"]{padding:8px 10px;border:1px solid #ddd;border-radius:8px;background:#fff}
+    button{cursor:pointer}
+    main{padding:16px;max-width:1100px;margin:0 auto}
+    .muted{color:var(--muted)}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+    footer{padding:16px;color:#555}
+    .badge{display:inline-block;border:1px solid var(--border);border-radius:999px;padding:2px 8px;background:#fff}
+    /* Läs-vy */
+    .output{background:var(--card);border:1px solid #ddd;border-radius:10px;padding:16px;white-space:normal}
+    .output:focus{outline:2px solid #a3d2ff}
+  </style>
 </head>
 <body>
-  <div class="wrap">
-    <header class="top">
-      <div>
-        <h1>Syllabus-analys (stadier F–3 / 4–6 / 7–9)</h1>
-        <p class="muted">Ämneslista lokalt → försök hämta detaljer via Skolverkets API, annars fallback till lokalt.</p>
+  <header>
+    <div class="row">
+      <div class="row">
+        <label>Ämne</label>
+        <select id="subjectSelect"></select>
       </div>
       <div class="row">
-        <label class="chip">
-          <input id="useApiToggle" type="checkbox" checked />
-          Använd API
-        </label>
+        <label>Stadie</label>
+        <select id="stageSelect">
+          <option value="1-3">F–3</option>
+          <option value="4-6" selected>4–6</option>
+          <option value="7-9">7–9</option>
+        </select>
       </div>
-    </header>
+      <label class="row"><input id="toggleAias" type="checkbox" checked> Visa AI-markeringar (AIAS)</label>
+      <span id="status" class="muted"></span>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <span class="badge">⛔ Förbjudet</span>
+      <span class="badge">✅ Tillåtet</span>
+      <span class="badge">📌 Förväntat</span>
+      <span class="badge">🔗 Integrerat</span>
+    </div>
+  </header>
 
-    <section class="grid">
-      <div class="card">
-        <h3>Datakälla</h3>
-        <label class="lbl">Skolverket Syllabus API-bas</label>
-        <input id="apiBase" value="https://api.skolverket.se/syllabus/v1" />
-        <p class="tiny muted">Vid CORS/HTTP-fel faller sidan tillbaka till lokala ämnesfiler i <code>/docs/subjects</code>.</p>
-      </div>
+  <main>
+    <div class="toolbar">
+      <button id="btnCopy">Kopiera text</button>
+      <button id="btnDownload">Ladda ner TXT</button>
+      <button id="btnShare">Dela…</button>
+    </div>
 
-      <div class="card">
-        <h3>Välj kurs/ämne</h3>
-        <select id="subjectSelect"></select>
-        <div id="status" class="tiny muted" style="min-height:1.2em"></div>
-      </div>
+    <!-- Läs-vy: renderar HTML -->
+    <div id="mdOut" class="output" aria-label="Kursplan som text" tabindex="0"></div>
 
-      <div class="card">
-        <h3>Export</h3>
-        <div class="row">
-          <button id="btnExportJSON">Exportera JSON</button>
-          <button id="btnExportMD">Exportera instruktioner (MD)</button>
-          <button id="btnExportDOCX">Exportera DOCX</button>
-          <button id="btnExportPDF">Exportera PDF</button>
-        </div>
-      </div>
-    </section>
+    <p class="muted">Tips: kopiera texten till kurs-PM/Teams/Google Classroom, eller använd “Ladda ner TXT”.</p>
+  </main>
 
-    <section class="grid">
-      <div class="card">
-        <h3 id="subjectTitle">Ämnesöversikt</h3>
-        <div id="subjectPurpose"></div>
-        <div class="block">
-          <h4 id="ccTitle">Centralt innehåll</h4>
-          <div class="row tiny">
-            <label>Stadie:
-              <select id="ccStageFilter">
-                <option value="">Alla</option>
-                <option value="1-3">Lågstadiet (1–3)</option>
-                <option value="4-6">Mellanstadiet (4–6)</option>
-                <option value="7-9">Högstadiet (7–9)</option>
-              </select>
-            </label>
-            <label>Sortera:
-              <select id="ccSort">
-                <option value="">Ursprunglig</option>
-                <option value="asc">F–3 → 7–9</option>
-                <option value="desc">7–9 → F–3</option>
-              </select>
-            </label>
-          </div>
-          <ul id="ccList" class="list"></ul>
-        </div>
-        <div class="block">
-          <h4>Kunskapskrav</h4>
-          <ul id="krList" class="list"></ul>
-        </div>
-      </div>
+  <footer>
+    <p class="muted">
+      ⚖️ Disclaimer: Symbolerna (⛔/✅/📌/🔗) är pedagogiska förslag baserade på kursplanens formuleringar (AIAS).
+      De ersätter inte lärarens professionella tolkning. Verktyget behandlar inga personuppgifter och sparar endast lokala
+      inställningar i webbläsaren. Användning av AI i undervisningen ska ske enligt skolans policy och gällande lagstiftning.
+    </p>
+  </footer>
 
-      <div class="card">
-        <div class="row between">
-          <h3>Bedömningsmoment</h3>
-          <div class="row">
-            <label class="tiny">Sortera:
-              <select id="assignStageSort">
-                <option value="">Ingen</option>
-                <option value="F-3">F–3</option>
-                <option value="4-6">4–6</option>
-                <option value="7-9">7–9</option>
-              </select>
-            </label>
-            <button id="btnAdd">+ Nytt moment</button>
-          </div>
-        </div>
-        <div id="assignments"></div>
-      </div>
-
-      <div class="card">
-        <h3>Förhandsvisning & PM-text</h3>
-        <div id="preview" class="preview muted">Lägg till ett moment och sätt gradering per stadie.</div>
-      </div>
-    </section>
-
-    <section class="card">
-      <h3>Graderingsnivåer (stödmatris)</h3>
-      <div class="levels">
-        <div class="lvl">
-          <div class="icon">⛔</div>
-          <div><b>Förbjudet</b> – AI används inte. Uppgiften genomförs utan digitala hjälpmedel.
-            <div class="tiny muted">Exempelord (Skolverket): <em>enkla</em>, <em>översiktligt</em>, <em>i huvudsak fungerande</em></div>
-          </div>
-        </div>
-        <div class="lvl">
-          <div class="icon">◑</div>
-          <div><b>Begränsat</b> – AI kan ge stöd men inte färdig produkt. <i>Logg krävs.</i>
-            <div class="tiny muted">Exempelord (Skolverket): <em>pröva</em>, <em>använda i enkla sammanhang</em>, <em>med viss säkerhet</em></div>
-          </div>
-        </div>
-        <div class="lvl">
-          <div class="icon">✅</div>
-          <div><b>Tillåtet</b> – AI som hjälpmedel; eleven visar förståelse. <i>Logg krävs.</i>
-            <div class="tiny muted">Exempelord (Skolverket): <em>utvecklade</em>, <em>resonera utförligt</em>, <em>jämföra</em>, <em>bearbeta</em></div>
-          </div>
-        </div>
-        <div class="lvl">
-          <div class="icon">📌</div>
-          <div><b>Obligatoriskt</b> – AI <i>ska</i> användas i ett moment. <i>Reflektion krävs.</i>
-            <div class="tiny muted">Exempelord (Skolverket): <em>analysera</em>, <em>värdera</em>, <em>resonera nyanserat</em>, <em>med säkerhet</em></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <footer class="tiny muted">
-      <p>Det är alltid lärarens professionella tolkning som avgör. Verktyget är ett stöd, inte en automatisk bedömning.</p>
-    </footer>
-  </div>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html-docx-js/0.5.1/html-docx.min.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>

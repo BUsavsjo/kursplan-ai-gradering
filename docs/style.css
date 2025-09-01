@@ -22,3 +22,6 @@ button:hover{background:#f9fafb}
 @media(max-width:720px){.levels{grid-template-columns:1fr}}
 .lvl{display:flex;gap:10px} .icon{font-size:20px;line-height:1.2}
 .preview{white-space:pre-wrap}
+.output{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;white-space:normal}
+.output h2,.output h3{margin:1em 0 .5em}
+.output p{margin:.5em 0}
