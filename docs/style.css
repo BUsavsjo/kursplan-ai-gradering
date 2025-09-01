@@ -180,3 +180,11 @@ button.secondary:hover{background:color-mix(in oklab, var(--accent) 8%, transpar
 .ai-hints h3 { margin: .2rem 0 .4rem; }
 .ai-help { margin: 0; padding-left: 1.2rem; }
 .ai-help li { margin: .2rem 0; }
+
+
+.sent{display:inline;padding:0 .15em;border-radius:.25rem}
+.sent-forbjudet{background:rgba(220,38,38,.12)}
+.sent-tillatet{background:rgba(234,179,8,.12)}
+.sent-forvantat{background:rgba(59,130,246,.12)}
+.sent-integrerat{background:rgba(16,185,129,.12)}
+.sent-neutral{background:transparent}
