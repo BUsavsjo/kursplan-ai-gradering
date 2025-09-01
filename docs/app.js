@@ -217,20 +217,29 @@ async function setSubject(subjectId){
   saveLocal();
 }
 
-function normalizeCC(list){
-  if(!Array.isArray(list)) return [];
-  return list.map((x,i)=>({ id: x.year || x.id || `CC${i+1}`, text: x.text || '' }))
-             .filter(x=> (x.text||'').trim() !== '');
-}
 function normalizeKR(list){
   if(!Array.isArray(list)) return {};
+
+  const toBand = (y) => {
+    const s = String(y||'').toLowerCase();
+    if (/1\s*[-–]\s*3|åk\s*3|årskurs\s*3/.test(s)) return '1-3';
+    if (/4\s*[-–]\s*6|åk\s*6|årskurs\s*6/.test(s)) return '4-6';
+    if (/7\s*[-–]\s*9|åk\s*9|årskurs\s*9/.test(s)) return '7-9';
+    // API kan ibland redan ge bandet direkt
+    if (/^1-3$|^4-6$|^7-9$/.test(s)) return s;
+    return '';
+  };
+
   const out = {};
   list.forEach((k,i)=>{
-    const key = [k.year, k.gradeStep].filter(Boolean).join(' · ') || `KR${i+1}`;
+    const band = toBand(k.year || k.gradeStep || '');
+    const label = (k.gradeStep || '').trim(); // t.ex. "E", "C", "A"
+    const key = band ? `${band} · ${label}` : `KR${i+1}`;
     out[key] = k.text || '';
   });
   return out;
 }
+
 
 // -------------------------------------------------------------
 // Kontext-kontroller (negation, exempel) — för AIAS-markering
