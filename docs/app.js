@@ -80,7 +80,7 @@ const AIAS_SV = {
       "enkel text","enkla texter","enkla instruktioner",
       "namnge","återge","definiera","ljudningsstrategi",
       "ljudning","memorera", "elevnära texter",
-      "vanligt förekommande ord", "vanligt förekommande texter"
+      "vanligt förekommande ord", "vanligt förekommande texter", "stavning av vanligt förekommande ord"
 
         
     ]
