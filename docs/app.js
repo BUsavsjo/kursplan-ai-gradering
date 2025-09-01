@@ -166,7 +166,16 @@ function aiasMark(text, enabled = true) {
   let t = String(text || '');
   for (const { icon, words } of Object.values(AIAS)) {
     for (const w of words) {
-      const re = new RegExp(`(?<!\\\p{L})(${escapeRegExp(w)})(?!\\\p{L})`, 'gui');
+      // Försök med Unicode-lookbehind (modernare motorer)
+      let re;
+      try {
+        re = new RegExp(`(?<!\p{L})(${escapeRegExp(w)})(?!\p{L})`, 'giu');
+      } catch {
+        // Fallback utan lookbehind (stöd för äldre motorer)
+        re = new RegExp(`(^|[^\p{L}])(${escapeRegExp(w)})(?=$|[^\p{L}])`, 'giu');
+        t = t.replace(re, `$1${icon} $2`);
+        continue;
+      }
       t = t.replace(re, `${icon} $1`);
     }
   }
