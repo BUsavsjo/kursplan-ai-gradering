@@ -216,6 +216,15 @@ async function setSubject(subjectId){
   renderText();
   saveLocal();
 }
+function normalizeCC(list){
+  if (!Array.isArray(list)) return [];
+  return list
+    .map((x, i) => ({
+      id: x.year || x.id || `CC${i+1}`,
+      text: x.text || ''
+    }))
+    .filter(x => (x.text || '').trim() !== '');
+}
 
 function normalizeKR(list){
   if(!Array.isArray(list)) return {};
