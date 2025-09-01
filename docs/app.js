@@ -231,25 +231,32 @@ function normalizeKR(list){
   return out;
 }
 
-// ---------- AIAS-markering ----------
+// ---------- AIAS-markering (emoji + highlight) ----------
 function aiasMark(text, enabled = true) {
   if (!enabled) return text || '';
   let t = String(text || '');
 
-  // Hjälpare: escape för regex
+  const CATEGORY_ORDER = ['INTEGRERAT', 'FORVANTAT', 'TILLATET', 'FORBJUDET'];
+  const ICON_RE = /[⛔✅📌🔗]/;
+
   function escapeRegExp(s) {
     return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
-
-  // Hjälpare: unicode-säkra ordgränser (inga bokstäver runt)
   const makeRe = (w) =>
     new RegExp(`(?<!\\p{L})(${escapeRegExp(w)})(?!\\p{L})`, 'giu');
 
-  // Kör igenom alla kategorier och ersätt ALLA träffar
-  for (const { icon, words } of Object.values(AIAS)) {
+  for (const cat of CATEGORY_ORDER) {
+    const { icon, words } = AIAS[cat];
     for (const w of words) {
       const re = makeRe(w);
-      t = t.replace(re, `${icon} $1`);
+      t = t.replace(re, (m, g1, offset) => {
+        // hoppa över om redan markerat
+        const start = Math.max(0, offset - 3);
+        const before = t.slice(start, offset);
+        if (/\s$/.test(before) && ICON_RE.test(before)) return m;
+
+        return `${icon} <span class="aias">${g1}</span>`;
+      });
     }
   }
 
