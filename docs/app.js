@@ -20,21 +20,30 @@ import { AIAS } from "./lexicons/aias-base.js";
 // ---------------------------------------------------------
 function getAIAS(subjectIdOrName) {
   const s = String(subjectIdOrName || "").toUpperCase();
-
+  let base;
   // Matcha både namn och ämneskoder
-  if (s.includes("MATEMATIK") || s.startsWith("GRGRMAT")) return AIAS_MA;
-  if (s.includes("ENGELSKA") || s.startsWith("GRGRENG")) return AIAS_EN;
-  if (s.includes("IDROTT") || s.startsWith("GRGRIDR")) return AIAS_IDR;
-  if (s.includes("MUSIK") || s.startsWith("GRGRMUS")) return AIAS_MUS;
-  if (s.includes("SLÖJD") || s.startsWith("GRGRSLJ")) return AIAS_SLJ;
-  if (
+  if (s.includes("MATEMATIK") || s.startsWith("GRGRMAT")) base = AIAS_MA;
+  else if (s.includes("ENGELSKA") || s.startsWith("GRGRENG")) base = AIAS_EN;
+  else if (s.includes("IDROTT") || s.startsWith("GRGRIDR")) base = AIAS_IDR;
+  else if (s.includes("MUSIK") || s.startsWith("GRGRMUS")) base = AIAS_MUS;
+  else if (s.includes("SLÖJD") || s.startsWith("GRGRSLJ")) base = AIAS_SLJ;
+  else if (
     s.includes("SVENSKA") ||
     s.startsWith("GRGRSVE") || // Svenska
     s.startsWith("GRGRSVA")    // Svenska som andraspråk
   )
-    return AIAS_SV;
+    base = AIAS_SV;
+  else base = AIAS; // fallback
 
-  return AIAS; // fallback
+  const normalized = {};
+  for (const key of AIAS_ORDER) {
+    const cat = base[key] || {};
+    normalized[key] = {
+      ...cat,
+      words: Array.isArray(cat.words) ? cat.words : [],
+    };
+  }
+  return normalized;
 }
 
 
@@ -292,7 +301,14 @@ function escapeRegExpLite(s) {
 function buildCategoryRegex(aias) {
   const rx = {};
   for (const key of AIAS_ORDER) {
-    const list = aias[key].words
+    const words = Array.isArray(aias[key]?.words)
+      ? aias[key].words.filter(Boolean)
+      : [];
+    if (!words.length) {
+      rx[key] = null;
+      continue;
+    }
+    const list = words
       .map((w) => escapeRegExpLite(w))
       .map((w) => w.replace(/\s+/g, "(?:\\s+|-)")) // tillåt bindestreck/varierande whitespace
       .map((w) =>
@@ -311,9 +327,14 @@ function scoreSentence(sent, rx) {
   };
   for (const key of AIAS_ORDER) {
     const r = rx[key];
+    if (!r) continue;
     r.lastIndex = 0;
     let m;
     while ((m = r.exec(sent)) !== null) {
+      if (m[0].length === 0) {
+        r.lastIndex += 1;
+        continue;
+      }
       const start = m.index,
         end = r.lastIndex;
       if (negatedAround(sent, start, end)) continue;
