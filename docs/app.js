@@ -22,7 +22,10 @@ const AIAS = {
       'grundläggande',
       'exempel på','något exempel','några exempel',
       'återge','namnge','definiera',
-      'memorera'   // flyttad hit → ses som grundkunskap i de flesta kursplaner
+      'memorera' ,
+      'ljudning',
+      'ljudningstrategi'
+        // flyttad hit → ses som grundkunskap i de flesta kursplaner
     ]
   },
 
