@@ -3,11 +3,12 @@
 const API_BASE = "https://api.skolverket.se/syllabus/v1";
 
 // AIAS-lexikon
+// AIAS-lexikon (samlad version för flera ämnen)
 const AIAS = {
   FORBJUDET: {
     icon: '⛔',
     words: [
-      // Fraser (E-nivå / miniminivå)
+      // Fraser
       'enkla resonemang',
       'i huvudsak fungerande',
       // Enskilda ord/böjningar
@@ -15,52 +16,62 @@ const AIAS = {
       'i huvudsak',
       'delvis',
       'någon mån',
-      'översiktligt',
+      'översiktligt','översiktliga','översiktligtvis',
       'grundläggande',
+      'exempel på','något exempel','några exempel',
       'återge','namnge','definiera'
     ]
   },
   TILLATET: {
     icon: '✅',
     words: [
-      // Fraser (mellannivå)
+      // Fraser
       'utvecklade resonemang',
       // Enskilda ord/böjningar
       'beskriva','jämföra','resonera','förklara',
-      'huvudsakligt','detaljer',
+      'huvudsakligt',
+      'detaljer','väsentliga','väsentlig',
       'tydligt','sammanhängande',
-      'relativt',                // "relativt tydligt/sammanhängande"
-      'fungerande',             // utan "i huvudsak" → mellannivå
-      'goda'                    // t.ex. "goda kunskaper"
+      'relativt',
+      'fungerande',           // utan “i huvudsak”
+      'goda','goda kunskaper',
+      'centrala','särskilt centrala'
     ]
   },
   FORVANTAT: {
     icon: '📌',
     words: [
-      // Fraser (analysnivå)
+      // Fraser
       'dra slutsatser',
       // Enskilda ord/böjningar
-      'analysera','värdera','diskutera',
-      'utvecklat',              // "diskutera utvecklat"
-      'variation','flyt',
-      'anpassat'                // "anpassat till syfte, mottagare, sammanhang"
+      'analysera','värdera','diskutera','reflektera',
+      'utvecklat','utvecklade',
+      'variation','varierat',
+      'flyt',
+      'anpassat','anpassning',
+      'kontinuitet','förändring'
     ]
   },
   INTEGRERAT: {
     icon: '🔗',
     words: [
-      // Fraser (hög progression)
+      // Fraser
       'välutvecklade resonemang',
-      'för den framåt',         // "för den framåt på ett konstruktivt sätt"
+      'för den framåt',
       'väl fungerande',
       // Enskilda ord/böjningar
       'kritiskt granska','problematisera','nyansera',
-      'välgrundat','nyanserat',
-      'välutvecklat','konstruktivt',
-      'mycket goda'            // t.ex. "mycket goda kunskaper"
+      'välgrundat','välgrundade',
+      'nyanserat',
+      'välutvecklat',
+      'konstruktivt',
+      'mycket goda','mycket goda kunskaper',
+      'helhet',
+      'trovärdighet','relevans'
     ]
   }
 };
+
 
 // State
 let subjectsIndex = [];      // [{id,name}]
