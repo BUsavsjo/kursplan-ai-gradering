@@ -297,7 +297,6 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
-
 function buildHtml(subject, stageKey = '4-6', opts = { aias: true, markCC: false }) {
   const parts = [];
   parts.push(
@@ -310,7 +309,8 @@ function buildHtml(subject, stageKey = '4-6', opts = { aias: true, markCC: false
     parts.push(`<p>${aiasMark(subject.purpose, opts.aias)}</p>`);
   }
 
-  // Centralt innehåll: INTE markerat som default (stofflista). Sätt markCC:true om du vill.
+  // Centralt innehåll: INTE markerat som default (stofflista).
+  // Sätt markCC:true i opts om du vill AIAS-markera även här.
   const cc = (subject.centralContent || []).filter(c => {
     const id = (c.id || '').trim();
     return !['1-3', '4-6', '7-9'].includes(id) || id === stageKey;
@@ -320,7 +320,9 @@ function buildHtml(subject, stageKey = '4-6', opts = { aias: true, markCC: false
     parts.push('<ul>');
     cc.forEach(c => {
       const text = String(c.text || '');
-      parts.push(`<li>${opts.markCC ? aiasMark(text, opts.aias) : escapeHtml(text)}</li>`);
+      const ccRendered = opts.markCC ? aiasMark(text, opts.aias) : text;
+      // Sanera så att rubriker/listor i CC renderas, men farligt innehåll tas bort
+      parts.push(`<li>${sanitizeHtml(ccRendered)}</li>`);
     });
     parts.push('</ul>');
   }
@@ -343,6 +345,8 @@ function buildHtml(subject, stageKey = '4-6', opts = { aias: true, markCC: false
 
   return parts.join('');
 }
+
+
 
 function sanitizeHtml(html) {
   const t = document.createElement('template');
