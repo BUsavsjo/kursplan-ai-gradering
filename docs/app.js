@@ -81,8 +81,7 @@ const AIAS = {
   }
 };
 
-
-
+// -------------------------------------------------------------
 // State
 let subjectsIndex = [];      // [{id,name}]
 let currentSubject = null;   // {subjectId,title,purpose,centralContent:[{id,text}],knowledgeRequirements:{key:text}}
@@ -107,7 +106,8 @@ function loadLocal(){
   catch { return {}; }
 }
 
-// ---------- Nätverk: API med proxy-fallback ----------
+// -------------------------------------------------------------
+// Nätverk: API med proxy-fallback
 async function fetchApi(url){
   try{
     const res = await fetch(url, {mode:'cors'});
@@ -121,7 +121,7 @@ async function fetchApi(url){
   }
 }
 
-// ---------- Ladda ämnen till dropdown ----------
+// Ladda ämnen till dropdown
 async function loadSubjects(){
   setStatus('Hämtar ämnen…');
   try{
@@ -189,7 +189,8 @@ function getLocalSubjectsFallback(){
   return S.map(([id,name])=>({id,name}));
 }
 
-// ---------- Hämta kursplan-detaljer för valt ämne ----------
+// -------------------------------------------------------------
+// Hämta kursplan-detaljer för valt ämne
 async function setSubject(subjectId){
   if(!subjectId) return;
   setStatus('Hämtar kursplan…');
@@ -231,43 +232,63 @@ function normalizeKR(list){
   return out;
 }
 
-// ---------- AIAS-markering (emoji + highlight) ----------
+// -------------------------------------------------------------
+// Kontext-kontroller (negation, exempel) — för AIAS-markering
+const NEGATIONS = ['inte','ej','utan','snarare än'];
+function negatedAround(text, start, end, window = 24) {
+  const pre = text.slice(Math.max(0, start - window), start).toLowerCase();
+  return NEGATIONS.some(n => pre.includes(` ${n} `));
+}
+const EX_PREFIX = /(t\.ex\.|till exempel|exempel på)\s*$/i;
+function isExampleContext(text, start, window = 24) {
+  const pre = text.slice(Math.max(0, start - window), start);
+  return EX_PREFIX.test(pre);
+}
+
+// -------------------------------------------------------------
+// AIAS-markering (emoji + highlight, prio + anti-dubbel + kontextfilter)
 function aiasMark(text, enabled = true) {
   if (!enabled) return text || '';
   let t = String(text || '');
 
+  // Prioritetsordning: starkast först
   const CATEGORY_ORDER = ['INTEGRERAT', 'FORVANTAT', 'TILLATET', 'FORBJUDET'];
   const ICON_RE = /[⛔✅📌🔗]/;
 
-  function escapeRegExp(s) {
-    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  }
-  const makeRe = (w) =>
-    new RegExp(`(?<!\\p{L})(${escapeRegExp(w)})(?!\\p{L})`, 'giu');
+  // Escape + flexibel fras (tillåter valfritt whitespace ELLER bindestreck mellan ord)
+  function escapeRegExp(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  const makeRe = (w) => {
+    const flexible = escapeRegExp(w).replace(/\s+/g, '(?:\\s+|-)');
+    return new RegExp(`(?<!\\p{L})(${flexible})(?!\\p{L})`, 'giu');
+  };
 
   for (const cat of CATEGORY_ORDER) {
     const { icon, words } = AIAS[cat];
     for (const w of words) {
       const re = makeRe(w);
       t = t.replace(re, (m, g1, offset) => {
-        // hoppa över om redan markerat
-        const start = Math.max(0, offset - 3);
-        const before = t.slice(start, offset);
-        if (/\s$/.test(before) && ICON_RE.test(before)) return m;
+        const start = offset;
+        const end   = offset + g1.length;
+
+        // 0) hoppa över om redan markerat (emoji innan eller redan <span class="aias">)
+        const pre30 = t.slice(Math.max(0, start - 30), start);
+        if ((/\s$/.test(pre30) && ICON_RE.test(pre30)) || pre30.includes('<span class="aias')) {
+          return m;
+        }
+        // 1) negation i närheten: markera inte
+        if (negatedAround(t, start, end)) return m;
+        // 2) exempel-kontext (t.ex./exempel på): markera inte
+        if (isExampleContext(t, start)) return m;
 
         return `${icon} <span class="aias">${g1}</span>`;
       });
     }
   }
-
   return t;
 }
 
-function escapeRegExp(s) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-// ---------- Bygg HTML från kursplan ----------
+// -------------------------------------------------------------
+// Bygg HTML från kursplan
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, '&amp;')
@@ -277,19 +298,19 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-function buildHtml(subject, stageKey = '4-6', opts = { aias: true }) {
+function buildHtml(subject, stageKey = '4-6', opts = { aias: true, markCC: false }) {
   const parts = [];
   parts.push(
     `<h2>${escapeHtml(`${subject.title || 'Ämne'} – kursplan (${stageKey})`)}</h2>`
   );
 
+  // Syfte: markeras
   if (subject.purpose) {
     parts.push('<h3>Syfte:</h3>');
-    parts.push(
-      `<p>${aiasMark(subject.purpose, opts.aias)}</p>`
-    );
+    parts.push(`<p>${aiasMark(subject.purpose, opts.aias)}</p>`);
   }
 
+  // Centralt innehåll: INTE markerat som default (stofflista). Sätt markCC:true om du vill.
   const cc = (subject.centralContent || []).filter(c => {
     const id = (c.id || '').trim();
     return !['1-3', '4-6', '7-9'].includes(id) || id === stageKey;
@@ -297,30 +318,25 @@ function buildHtml(subject, stageKey = '4-6', opts = { aias: true }) {
   if (cc.length) {
     parts.push(`<h3>Centralt innehåll (${stageKey}):</h3>`);
     parts.push('<ul>');
-    cc.forEach(c =>
-      parts.push(
-        `<li>${aiasMark(c.text || '', opts.aias)}</li>`
-      )
-    );
+    cc.forEach(c => {
+      const text = String(c.text || '');
+      parts.push(`<li>${opts.markCC ? aiasMark(text, opts.aias) : escapeHtml(text)}</li>`);
+    });
     parts.push('</ul>');
   }
 
-  const krEntries = Object.entries(subject.knowledgeRequirements || {}).filter(
-    ([k]) => {
-      const part = k.split(' · ')[0];
-      return !['1-3', '4-6', '7-9'].includes(part) || part === stageKey;
-    }
-  );
+  // Kunskapskrav: markeras
+  const krEntries = Object.entries(subject.knowledgeRequirements || {}).filter(([k]) => {
+    const part = k.split(' · ')[0];
+    return !['1-3', '4-6', '7-9'].includes(part) || part === stageKey;
+  });
   if (krEntries.length) {
-    const steg =
-      stageKey === '1-3' ? 'Åk 3' : stageKey === '4-6' ? 'Åk 6' : 'Åk 9';
+    const steg = stageKey === '1-3' ? 'Åk 3' : stageKey === '4-6' ? 'Åk 6' : 'Åk 9';
     parts.push(`<h3>Kunskapskrav (${steg}, utdrag):</h3>`);
     parts.push('<ul>');
     krEntries.forEach(([k, v]) => {
       const grade = (k.split('·')[1] || '').trim();
-      parts.push(
-        `<li>${grade ? `${grade}: ` : ''}${aiasMark(String(v || ''), opts.aias)}</li>`
-      );
+      parts.push(`<li>${grade ? `${grade}: ` : ''}${aiasMark(String(v || ''), opts.aias)}</li>`);
     });
     parts.push('</ul>');
   }
@@ -340,7 +356,8 @@ function sanitizeHtml(html) {
   return t.innerHTML;
 }
 
-// ---------- Rendera till <div> ----------
+// -------------------------------------------------------------
+// Rendera till <div>
 function renderText() {
   if (!currentSubject) {
     $('#mdOut').innerHTML = '';
@@ -348,11 +365,12 @@ function renderText() {
   }
   const stage = $('#stageSelect').value;
   const aias = $('#toggleAias').checked;
-  const html = sanitizeHtml(buildHtml(currentSubject, stage, { aias }));
+  const html = sanitizeHtml(buildHtml(currentSubject, stage, { aias, markCC: false }));
   $('#mdOut').innerHTML = html;
 }
 
-// ---------- Export / kopiera / dela ----------
+// -------------------------------------------------------------
+// Export / kopiera / dela
 $('#btnDownload').addEventListener('click', () => {
   if (!currentSubject) return;
   const stage = $('#stageSelect').value;
@@ -390,7 +408,8 @@ $('#btnShare').addEventListener('click', async ()=>{
   }
 });
 
-// ---------- Init ----------
+// -------------------------------------------------------------
+// Init
 (async function init(){
   // Event handlers
   $('#subjectSelect').addEventListener('change', e=>{ setSubject(e.target.value); saveLocal(); });
