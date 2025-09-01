@@ -3,6 +3,7 @@
 "use strict";
 
 const API_BASE = "https://api.skolverket.se/syllabus/v1";
+const PROXY_URL = "https://corsproxy.io/?";
 
 import { getLocalSubjectsFallback } from "./subjects/fallback.js";
 import { AIAS_SV } from "./lexicons/aias-sv.js";
@@ -70,18 +71,40 @@ function loadLocal() {
   }
 }
 
+async function fetchWithTimeout(url, options = {}, timeout = 8000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(id);
+  }
+}
+
 // -------------------------------------------------------------
 // Nätverk: API med proxy-fallback
 async function fetchApi(url) {
   try {
-    const res = await fetch(url, { mode: "cors" });
+    const res = await fetchWithTimeout(url, { mode: "cors" });
     if (!res.ok) throw new Error("HTTP " + res.status);
     return { res, viaProxy: false };
   } catch (e) {
-    const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-    const res = await fetch(proxy);
+    const proxy = `${PROXY_URL}${encodeURIComponent(url)}`;
+    const res = await fetchWithTimeout(proxy);
     if (!res.ok) throw new Error("Proxy HTTP " + res.status);
     return { res, viaProxy: true };
+  }
+}
+
+async function checkProxy() {
+  try {
+    const testUrl = `${API_BASE}/subjects?limit=1`;
+    const proxy = `${PROXY_URL}${encodeURIComponent(testUrl)}`;
+    const res = await fetchWithTimeout(proxy, {}, 5000);
+    if (!res.ok) throw new Error("Proxy HTTP " + res.status);
+    console.log("Proxy OK");
+  } catch (e) {
+    console.warn("Proxy check failed", e);
   }
 }
 
@@ -517,6 +540,7 @@ function renderText() {
 
   // Ladda ämnen
   await loadSubjects();
+  checkProxy();
 
   // Återställ tidigare val
   const prev = loadLocal();
