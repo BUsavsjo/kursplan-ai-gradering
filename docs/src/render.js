@@ -11,8 +11,11 @@ import { AIAS } from "../lexicons/aias-base.js";
 
 const AIAS_ORDER = ["FORBJUDET", "TILLATET", "FORVANTAT", "INTEGRERAT"];
 
-function getAIAS(subjectIdOrName) {
-  const s = String(subjectIdOrName || "").toUpperCase();
+function getAIAS(subject) {
+  const s = String(
+    subject?.subjectId || subject?.title || subject || ""
+  ).toUpperCase();
+  const title = subject?.title || (typeof subject === "string" ? subject : "");
   let base;
   if (s.includes("MATEMATIK") || s.startsWith("GRGRMAT")) base = AIAS_MA;
   else if (s.includes("ENGELSKA") || s.startsWith("GRGRENG")) base = AIAS_EN;
@@ -28,6 +31,11 @@ function getAIAS(subjectIdOrName) {
     base = AIAS_SV;
   else base = AIAS;
 
+  const lexiconLabel =
+    base === AIAS
+      ? "baslista (generella ord)"
+      : `ämnesspecifikt (${title || "ämne"})`;
+
   const normalized = {};
   for (const key of AIAS_ORDER) {
     const cat = base[key] || {};
@@ -36,6 +44,7 @@ function getAIAS(subjectIdOrName) {
       words: Array.isArray(cat.words) ? cat.words : [],
     };
   }
+  normalized.lexiconLabel = lexiconLabel;
   return normalized;
 }
 
@@ -143,7 +152,7 @@ function splitSentencesCompat(text) {
   return String(text || "").match(/[^.!?…]+[.!?…]?/g) || [String(text || "")];
 }
 function annotateBySentenceWithWordMarks(text, enabled = true) {
-  const activeAIAS = getAIAS(currentSubject?.subjectId || currentSubject?.title);
+  const activeAIAS = getAIAS(currentSubject);
   const rx = buildCategoryRegex(activeAIAS);
   const parts = splitSentencesCompat(text);
   return parts
@@ -168,10 +177,15 @@ function escapeHtml(str) {
 }
 export function buildHtml(subject, stageKey = "4-6", opts = { aias: true, markCC: false }) {
   const parts = [];
-  const activeAIAS = getAIAS(subject?.subjectId || subject?.title);
+  const activeAIAS = getAIAS(subject);
 
   parts.push(
     `<h2>${escapeHtml(`${subject.title || "Ämne"} – kursplan (${stageKey})`)}</h2>`
+  );
+  parts.push(
+    `<p class="tiny muted">Lexikon: ${escapeHtml(
+      activeAIAS.lexiconLabel
+    )}</p>`
   );
 
   if (subject.purpose) {
