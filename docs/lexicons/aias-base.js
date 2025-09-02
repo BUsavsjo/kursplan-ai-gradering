@@ -1,59 +1,53 @@
+// ./lexicons/aias-generell.js
 export const AIAS = {
   FORBJUDET: {
     icon: "⛔",
     words: [
-      "enkla resonemang", "i huvudsak fungerande", "enkla samband",
-      "enkla","enkel","enkelt",
-      "i huvudsak","delvis","någon mån",
-      "översiktligt","översiktliga","grundläggande",
-      "exempel på","något exempel","några exempel",
-      "återge","namnge","definiera","memorera",
-      "ljudning","ljudningsstrategi"
+      "enkla resonemang","enkla samband","enkla beskrivningar",
+      "i huvudsak fungerande","i huvudsak korrekt",
+      "översiktligt","delvis","i någon mån",
+      "grundläggande","enkel","något exempel","några exempel",
+      "återge","namnge","identifiera","memorera","definiera"
     ]
   },
   INTRODUCERA: {
     icon: "🌱",
     words: [
-      "utvecklade resonemang","relativt välgrundade","förhållandevis komplexa samband",
+      "utvecklade resonemang","relativt välgrundade",
+      "förhållandevis komplexa samband",
       "beskriva","jämföra","resonera","förklara",
-      "huvudsakligt","detaljer","väsentliga","väsentlig",
-      "tydligt","sammanhängande","relativt","förhållandevis",
-      "fungerande","goda","goda kunskaper",
-      "centrala","särskilt centrala","lättillgängliga","lättillgängligt",
-      "kommunicera","kommunikation","tolka","hantera","hantering",
-      "delta","deltar","träna","träning","samarbeta","samverka",
-      "genomföra","genomför","använda","använder",
-      "spela","sjunga","lyssna"
+      "väsentliga delar","tydligt","sammanhängande",
+      "fungerande","goda kunskaper","centrala begrepp",
+      "kommunicera","tolka","använda","hantera",
+      "delta","samarbeta","genomföra","pröva"
     ]
   },
   BEARBETA: {
     icon: "✏️",
-    words: ["bearbeta","redigera","förtydliga","omformulera","förbättra"]
+    words: [
+      "bearbeta","redigera","förtydliga","omformulera","förbättra",
+      "utveckla","anpassa","fördjupa","tillämpa"
+    ]
   },
   FORVANTAT: {
     icon: "📌",
     words: [
-      "dra slutsatser","ur olika perspektiv","ståndpunkter och argument",
-      "demokratins möjligheter och utmaningar",
-      "analysera","värdera","diskutera","reflektera","reflektion",
-      "utvecklat","utvecklade","variation","varierat","flyt",
-      "anpassat","anpassning","kontinuitet","förändring",
-      "improvisera","gestalta","gestaltningsförmåga",
-      "skapa","skapande","utforma","utformande",
-      "konstruera","designa","undersöka","observera","dokumentera",
-      "utforska","experimentera","planera","strategi","strategier"
+      "dra slutsatser","analysera","värdera","diskutera","reflektera",
+      "relatera till olika perspektiv","argumentera","motivera",
+      "utvecklat","varierat","anpassat","nyanserat",
+      "gestalta","skapa","utforma","konstruera","undersöka",
+      "planera","strategi","systematiskt","dokumentera"
     ]
   },
   INTEGRERAT: {
     icon: "🔗",
     words: [
-      "välutvecklade resonemang","för den framåt","väl fungerande","källkritiska argument",
-      "kritiskt granska","problematisera","nyansera",
-      "välgrundat","välgrundade","nyanserat","välutvecklat","konstruktivt",
-      "mycket goda","mycket goda kunskaper",
-      "helhet","trovärdighet","relevans",
-      "komponera","arrangera","utvärdera","förfina","fördjupa",
-      "rolltolkning","gestaltningsdjup"
+      "välutvecklade resonemang","välgrundade slutsatser","nyanserade analyser",
+      "kritiskt granska","problematisera","fördjupa",
+      "helhetsperspektiv","sammanhang","relevans","trovärdighet",
+      "konstruktivt","mycket goda kunskaper",
+      "utvärdera","förfina","komponera","arrangera",
+      "fördjupad reflektion","avancerade begrepp","samverkan"
     ]
   }
 };
