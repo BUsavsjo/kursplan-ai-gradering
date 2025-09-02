@@ -12,7 +12,9 @@ export const AIAS_MUS = {
       "namnge", "lista", "memorera",
       "enstaka toner", "enkelt komp",
       "bara puls", "bara takt",
-      "utan begrepp", "utan motivering"
+      "utan begrepp", "utan motivering",
+      "i huvudsak anpassa", "viss säkerhet",
+      "något exempel"
     ]
   },
   TILLATET: {
@@ -21,14 +23,16 @@ export const AIAS_MUS = {
       "beskriva", "resonera", "jämföra", "förklara",
       "använda musikbegrepp", "använder musikbegrepp",
       "puls", "rytm", "takt", "tempo", "dynamik", "klang", "melodi", "harmonik", "form",
+      "fraser", "perioder", "taktarter",
       "vers", "refräng", "brygga", "intro", "outro",
       "sjunga unison", "sjunger unison", "kanon",
       "spela stämma", "spela melodi", "kompa på ackord",
       "ackordföljd", "tonika", "dominant",
       "samspel", "delta i ensemble", "följa dirigering",
       "notläsning enkel", "tabulatur",
-      "lyssna aktivt", "ge exempel på genre",
-      "använda digitalt verktyg", "loopar", "MIDI", "inspelning enkel"
+      "lyssna aktivt", "genre",
+      "använda digitalt verktyg", "loopar", "MIDI", "inspelning enkel",
+      "relativt god säkerhet", "anpassa väl", "exempel"
     ]
   },
   FORVANTAT: {
@@ -44,7 +48,8 @@ export const AIAS_MUS = {
       "ljudproduktion", "mixning grund", "mikrofonteknik",
       "upphovsrätt", "källkritik i musik", "licenser",
       "scenisk närvaro", "kommunicera med publik",
-      "dokumentera process", "utvärdera arbetet"
+      "dokumentera process", "utvärdera arbetet",
+      "god säkerhet", "anpassa"
     ]
   },
   INTEGRERAT: {
@@ -60,7 +65,7 @@ export const AIAS_MUS = {
       "produktion och mix", "mastering översiktlig", "automation i DAW",
       "intertextuella referenser", "kulturella perspektiv",
       "konstruktiv återkoppling", "utvärdera med kriterier",
-      "väl fungerande samspel", "för den framåt"
+      "väl fungerande samspel", "anpassa mycket väl", "mycket god säkerhet"
     ]
   }
 };
