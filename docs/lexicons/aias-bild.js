@@ -63,4 +63,16 @@ export const AIAS_BILD = {
       "kulturhistoriska perspektiv", "samtidskonst",
       "semiotik", "symbolik", "visuella strategier",
       // avancerad produktion
-      "typografi avancerad", "
+      "typografi avancerad", "visuell hierarki",
+      "foto avancerat", "animation", "motion graphics",
+      "storyboard", "produktionsplan",
+      "avancerad bildbehandling", "lager och masker", "color grading",
+      "3d-modellering översikt",
+      // samarbete & kvalitet
+      "användartestning", "målgruppsanpassning",
+      "konstruktiv återkoppling", "förfina", "fördjupa",
+      "projektleda", "samverka",
+      "väl fungerande helhet", "anpassa mycket väl", "mycket god säkerhet"
+    ]
+  }
+};
