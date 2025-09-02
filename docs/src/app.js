@@ -12,6 +12,81 @@ function setStatus(msg) {
   if (el) el.textContent = msg || "";
 }
 
+function extractAiasLevels(text) {
+  const levels = new Set();
+  if (/(⛔|Begränsat|Förbjudet)/i.test(text)) levels.add("Begränsat");
+  if (/(🌱|Introducera)/i.test(text)) levels.add("Introducera");
+  if (/(📌|Förväntat)/i.test(text)) levels.add("Förväntat");
+  if (/(🔗|Integrerat)/i.test(text)) levels.add("Integrerat");
+  return levels;
+}
+
+function buildAiasPrompt({ subject, stage, text, levels }) {
+  const intro =
+    "Du är en pedagogisk AI-assistent. Använd AIAS för att stödja undervisningen.";
+  const excerptRaw = text.trim().slice(0, 400);
+  const excerpt = excerptRaw.replace(/\s+/g, " ");
+  const ellipsis = text.trim().length > 400 ? "…" : "";
+  let prompt = `# AIAS-prompt\n${intro}\nÄmne: ${subject}\nStadie: ${stage}\nUtdrag: ${excerpt}${ellipsis}\n`;
+  const info = {
+    Begränsat: {
+      icon: "⛔",
+      desc:
+        "Skapa uppgifter för baskunskaper och ämnesspråk utan AI. Eleven arbetar självständigt. Ge basordlista (10–15 begrepp) där eleven formulerar egna definitioner. Lägg till kontrollfrågor (facit för lärare).",
+    },
+    Introducera: {
+      icon: "🌱",
+      desc:
+        "Använd AI för form/struktur/disposition och exempel. Kräv omformulering med egna ord. Lägg en mini-exit-ticket (3 frågor) utan AI.",
+    },
+    Förväntat: {
+      icon: "📌",
+      desc:
+        "AI som sparringpartner för perspektiv, argument, jämförelser. Eleven väljer, motiverar, drar slutsatser. Lägg till bedömningspunkter för utvecklade resonemang.",
+    },
+    Integrerat: {
+      icon: "🔗",
+      desc:
+        "AI för källkritik och fördjupning: källjämförelse, motargument, bias-kontroll. Kräv dokumenterade granskningssteg och elevens transparens kring AI-användning.",
+    },
+  };
+  const order = ["Begränsat", "Introducera", "Förväntat", "Integrerat"];
+  for (const lvl of order) {
+    if (levels.has(lvl)) {
+      const { icon, desc } = info[lvl];
+      prompt += `\n## ${icon} ${lvl}\n${desc}\n`;
+    }
+  }
+  return prompt.trim();
+}
+
+function openPromptPreview(promptText) {
+  const dlg = document.createElement("dialog");
+  const taId = "promptTextArea";
+  dlg.innerHTML = `
+    <form method="dialog" style="min-width:300px">
+      <textarea id="${taId}" style="width:100%;height:300px;">${promptText}</textarea>
+      <div style="margin-top:6px;text-align:right">
+        <button type="button" id="copyPrompt">Kopiera</button>
+        <button>Stäng</button>
+      </div>
+    </form>
+  `;
+  document.body.appendChild(dlg);
+  const ta = dlg.querySelector(`#${taId}`);
+  dlg.querySelector("#copyPrompt")?.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(ta.value);
+      setStatus("Prompt kopierad ✔");
+      setTimeout(() => setStatus(""), 1200);
+    } catch {
+      setStatus("Kunde inte kopiera");
+    }
+  });
+  dlg.addEventListener("close", () => dlg.remove());
+  dlg.showModal();
+}
+
 (function wireExportButtons() {
   const btnDownload = $("#btnDownload");
   if (btnDownload) {
@@ -64,6 +139,23 @@ function setStatus(msg) {
           setStatus("Varken dela eller kopiera fungerade");
         }
       }
+    });
+  }
+
+  const btnPrompt = $("#btnPrompt");
+  if (btnPrompt) {
+    btnPrompt.addEventListener("click", () => {
+      const subject = $("#subjectSelect")?.value || "";
+      const stage = $("#stageSelect")?.value || "";
+      const text = $("#mdOut")?.innerText || "";
+      if (!text.trim()) {
+        setStatus("Ingen text att skapa prompt av");
+        setTimeout(() => setStatus(""), 1500);
+        return;
+      }
+      const levels = extractAiasLevels(text);
+      const promptText = buildAiasPrompt({ subject, stage, text, levels });
+      openPromptPreview(promptText);
     });
   }
 })();
