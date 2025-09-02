@@ -26,6 +26,10 @@ export const AIAS_IDR = {
       "relativt god säkerhet", "anpassa väl"
     ]
   },
+  BEARBETA: {
+    icon: "✏️",
+    words: ["bearbeta","redigera","förtydliga","omformulera","förbättra"]
+  },
   FORVANTAT: {
     icon: "📌",
     words: [

@@ -14,6 +14,10 @@ export const AIAS_MA = {
       "relativt komplexa problem","relativt väl underbyggda argument","relativt välgrundade"
     ]
   },
+  BEARBETA: {
+    icon: "✏️",
+    words: ["bearbeta","redigera","förtydliga","omformulera","förbättra"]
+  },
   FORVANTAT: {
     icon: "📌",
     words: [

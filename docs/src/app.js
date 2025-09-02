@@ -12,6 +12,42 @@ function setStatus(msg) {
   if (el) el.textContent = msg || "";
 }
 
+export function extractAiasLevels(text = "") {
+  const t = String(text || "");
+  const levels = [];
+  if (/⛔|begränsat|förbjudet/i.test(t)) levels.push("Begränsat");
+  if (/🌱|introducera/i.test(t)) levels.push("Introducera");
+  if (/✏️|bearbeta/i.test(t)) levels.push("Bearbeta");
+  if (/📌|förväntat/i.test(t)) levels.push("Förväntat");
+  if (/🔗|integrerat/i.test(t)) levels.push("Integrerat");
+  return levels;
+}
+
+export function buildAiasPrompt(levels = []) {
+  const order = [
+    "Begränsat",
+    "Introducera",
+    "Bearbeta",
+    "Förväntat",
+    "Integrerat",
+  ];
+  const descriptions = {
+    Begränsat: "Ingen AI. Fokus på baskunskaper.",
+    Introducera:
+      "Introducera AI i små steg för struktur, disposition och exempel.",
+    Bearbeta:
+      "AI för språkförbättring, tydlighet, struktur och redigering. Eleven ansvarar för innehållet men får hjälp med presentationen.",
+    Förväntat:
+      "AI som sparringpartner för att få perspektiv, argument och jämförelser.",
+    Integrerat:
+      "AI för källkritik och fördjupning: jämför källor, motargument och bias.",
+  };
+  return order
+    .filter((lvl) => levels.includes(lvl))
+    .map((lvl) => `${lvl}: ${descriptions[lvl]}`)
+    .join("\n");
+}
+
 (function wireExportButtons() {
   const btnDownload = $("#btnDownload");
   if (btnDownload) {

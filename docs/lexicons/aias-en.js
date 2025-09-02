@@ -18,6 +18,10 @@ export const AIAS_EN = {
       "använda","använder","kommunicera","kommunikation","tolka"
     ]
   },
+  BEARBETA: {
+    icon: "✏️",
+    words: ["revise","edit","refine","clarify","improve"]
+  },
   FORVANTAT: {
     icon: "📌",
     words: [

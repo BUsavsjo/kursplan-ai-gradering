@@ -35,6 +35,10 @@ export const AIAS_MUS = {
       "relativt god säkerhet", "anpassa väl", "exempel"
     ]
   },
+  BEARBETA: {
+    icon: "✏️",
+    words: ["bearbeta","redigera","förtydliga","omformulera","förbättra"]
+  },
   FORVANTAT: {
     icon: "📌",
     words: [
