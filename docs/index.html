@@ -2,121 +2,94 @@
 <html lang="sv">
 <head>
   <meta charset="utf-8" />
-  <title>Syllabus-analys (F–3 / 4–6 / 7–9)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="./style.css" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="./style.css?v=2">
+  <title>Kursplan → Text (med AIAS-markering)</title>
 </head>
 <body>
-  <div class="wrap">
-    <header class="top">
-      <div>
-        <h1>Syllabus-analys (stadier F–3 / 4–6 / 7–9)</h1>
-        <p class="muted">Ämneslista lokalt → försök hämta detaljer via Skolverkets API, annars fallback till lokalt.</p>
-      </div>
-      <div class="row">
-        <label class="chip">
-          <input id="useApiToggle" type="checkbox" checked />
-          Använd API
-        </label>
-      </div>
-    </header>
-
-    <section class="grid">
-      <div class="card">
-        <h3>Datakälla</h3>
-        <label class="lbl">Skolverket Syllabus API-bas</label>
-        <input id="apiBase" value="https://api.skolverket.se/syllabus/v1" />
-        <p class="tiny muted">Vid CORS/HTTP-fel faller sidan tillbaka till lokala ämnesfiler i <code>/docs/subjects</code>.</p>
-      </div>
-
-      <div class="card">
-        <h3>Välj kurs/ämne</h3>
+  <header>
+    <div class="row">
+      <label class="row">
+        <span>Ämne</span>
         <select id="subjectSelect"></select>
-        <div id="status" class="tiny muted" style="min-height:1.2em"></div>
-      </div>
+      </label>
+      <span id="subjectSource" class="tiny muted"></span>
+      <span id="lexiconLabel" class="tiny muted"></span>
+      <label class="row">
+        <span>Stadie</span>
+        <select id="stageSelect">
+          <option value="1-3">1–3</option>
+          <option value="4-6" selected>4–6</option>
+          <option value="7-9">7–9</option>
+        </select>
+      </label>
+      <label class="row"><input id="toggleAias" type="checkbox" checked> Visa AI-markeringar (AIAS)</label>
+      <label class="row"><input id="toggleCc" type="checkbox"> Markera centralt innehåll</label>
+      <span id="status" class="muted"></span>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <span class="badge">⛔ Begränsat</span>
+      <span class="badge">🌱 Introducera</span>
+      <span class="badge">✏️ Bearbeta</span>
+      <span class="badge">📌 Förväntat</span>
+      <span class="badge">🔗 Integrerat</span>
+    </div>
+    <div class="ai-hints card" aria-label="AI-stöd per nivå" style="margin-top:10px">
+      <h3>AI-stöd (pedagogens kompass)</h3>
+      <ul class="ai-help">
+        <li>⛔ <strong>Begränsat</strong>: Fokus på baskunskaper och ämnesspråk. <em>Introducera inte AI som verktyg ännu.</em></li>
+        <li>🌱 <strong>Introducera</strong>: Introducera AI i små steg för <em>struktur, disposition och exempel</em>. Undvik färdiga svar – kräv <em>omformulering med egna ord</em>.</li>
+        <li>✏️ <strong>Bearbeta</strong>: AI för språkförbättring, tydlighet, struktur och redigering. Eleven ansvarar för innehållet men får hjälp med presentationen.</li>
+        <li>📌 <strong>Förväntat</strong>: Använd AI som <em>sparringpartner</em> för att få <em>perspektiv, argument och jämförelser</em>. Eleven ska <em>välja, motivera och dra slutsatser</em>.</li>
+        <li>🔗 <strong>Integrerat</strong>: Använd AI för <em>källkritik och fördjupning</em>: jämför källor, be om motargument, kontrollera bias och <em>dokumentera granskningssteg</em>.</li>
+      </ul>
+      <p class="tiny muted" style="margin-top:6px">
+        Notis: AI-stödet är vägledande och ersätter inte lärarens professionella bedömning eller skolans policy.
+      </p>
+    </div>
+  </header>
 
-      <div class="card">
-        <h3>Export</h3>
-        <div class="row">
-          <button id="btnExportJSON">Exportera JSON</button>
-          <button id="btnExportMD">Exportera instruktioner (MD)</button>
-        </div>
-      </div>
-    </section>
+  <main>
+    <div class="toolbar">
+      <button id="btnCopy">Kopiera text</button>
+      <button id="btnDownload">Ladda ner TXT</button>
+      <button id="btnShare">Dela…</button>
+      <button id="btnPrompt">Prompt</button>
+    </div>
 
-    <section class="grid">
-      <div class="card">
-        <h3 id="subjectTitle">Ämnesöversikt</h3>
-        <div id="subjectPurpose"></div>
-        <div class="block">
-          <h4 id="ccTitle">Centralt innehåll</h4>
-          <div class="row tiny">
-            <label>Stadie:
-              <select id="ccStageFilter">
-                <option value="">Alla</option>
-                <option value="1-3">Lågstadiet (1–3)</option>
-                <option value="4-6">Mellanstadiet (4–6)</option>
-                <option value="7-9">Högstadiet (7–9)</option>
-              </select>
-            </label>
-          </div>
-          <ul id="ccList" class="list"></ul>
-        </div>
-        <div class="block">
-          <h4>Kunskapskrav</h4>
-          <ul id="krList" class="list"></ul>
-        </div>
-      </div>
+    <!-- Läs-vy: renderar HTML -->
+    <div id="mdOut" class="output" aria-label="Kursplan som text" tabindex="0"></div>
 
-      <div class="card">
-        <div class="row between">
-          <h3>Bedömningsmoment (stadie-matris)</h3>
-          <button id="btnAdd">+ Nytt moment</button>
-        </div>
-        <div id="assignments"></div>
-      </div>
+    <p class="muted">Tips: kopiera texten till kurs-PM/Teams/Google Classroom, eller använd “Ladda ner TXT”.</p>
+  </main>
 
-      <div class="card">
-        <h3>Förhandsvisning & PM-text</h3>
-        <div id="preview" class="preview muted">Lägg till ett moment och sätt gradering per stadie.</div>
-      </div>
-    </section>
+  <footer>
+    <p class="muted">
+      ⚖️ Disclaimer: Symbolerna (⛔/🌱/✏️/📌/🔗) är pedagogiska förslag baserade på kursplanens formuleringar (AIAS).
+      De ersätter inte lärarens professionella tolkning. Verktyget behandlar inga personuppgifter och sparar endast lokala
+      inställningar i webbläsaren. Användning av AI i undervisningen ska ske enligt skolans policy och gällande lagstiftning.
+    </p>
 
-    <section class="card">
-      <h3>Graderingsnivåer (stödmatris)</h3>
-      <div class="levels">
-        <div class="lvl">
-          <div class="icon">⛔</div>
-          <div><b>Förbjudet</b> – AI används inte. Uppgiften genomförs utan digitala hjälpmedel.
-            <div class="tiny muted">Exempelord (Skolverket): <em>enkla</em>, <em>översiktligt</em>, <em>i huvudsak fungerande</em></div>
-          </div>
-        </div>
-        <div class="lvl">
-          <div class="icon">◑</div>
-          <div><b>Begränsat</b> – AI kan ge stöd men inte färdig produkt. <i>Logg krävs.</i>
-            <div class="tiny muted">Exempelord (Skolverket): <em>pröva</em>, <em>använda i enkla sammanhang</em>, <em>med viss säkerhet</em></div>
-          </div>
-        </div>
-        <div class="lvl">
-          <div class="icon">✅</div>
-          <div><b>Tillåtet</b> – AI som hjälpmedel; eleven visar förståelse. <i>Logg krävs.</i>
-            <div class="tiny muted">Exempelord (Skolverket): <em>utvecklade</em>, <em>resonera utförligt</em>, <em>jämföra</em>, <em>bearbeta</em></div>
-          </div>
-        </div>
-        <div class="lvl">
-          <div class="icon">📌</div>
-          <div><b>Obligatoriskt</b> – AI <i>ska</i> användas i ett moment. <i>Reflektion krävs.</i>
-            <div class="tiny muted">Exempelord (Skolverket): <em>analysera</em>, <em>värdera</em>, <em>resonera nyanserat</em>, <em>med säkerhet</em></div>
-          </div>
-        </div>
-      </div>
-    </section>
+    <div class="card" style="margin-top:12px">
+      <h3>ℹ️ Om AIAS</h3>
+      <p>
+        <strong>AIAS (AI Assisted Syllabus)</strong> är en modell för att visualisera progressionen i
+        kunskapskraven med hjälp av fem nivåer:
+      </p>
+      <ul>
+          <li>⛔ <em>Begränsat</em>: baskunskaper, AI bör inte introduceras.</li>
+        <li>🌱 <em>Introducera</em>: fungerande kunskaper, AI kan stödja struktur och exempel.</li>
+        <li>✏️ <em>Bearbeta</em>: AI för språkförbättring, tydlighet och redigering.</li>
+        <li>📌 <em>Förväntat</em>: analysnivå, AI kan användas för perspektiv och resonemang.</li>
+        <li>🔗 <em>Integrerat</em>: avancerad nivå, AI kan bli en kritisk partner och användas för nyansering.</li>
+      </ul>
+      <p>
+        Syftet är att ge pedagoger en kompass för <strong>när och hur AI kan introduceras i ämnet</strong>,
+        inte att ersätta den professionella lärarbedömningen.
+      </p>
+    </div>
+  </footer>
 
-    <footer class="tiny muted">
-      <p>Det är alltid lärarens professionella tolkning som avgör. Verktyget är ett stöd, inte en automatisk bedömning.</p>
-    </footer>
-  </div>
-
-  <script src="./app.js"></script>
+  <script type="module" src="./src/app.js"></script>
 </body>
 </html>
