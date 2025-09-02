@@ -176,13 +176,19 @@ function openPromptPreview(promptText) {
     });
   }
   const aiasTgl = $("#toggleAias");
+  const ccTgl = $("#toggleCc");
+  function syncCcToggle() {
+    if (!ccTgl) return;
+    ccTgl.disabled = !aiasTgl?.checked;
+    if (!aiasTgl?.checked) ccTgl.checked = false;
+  }
   if (aiasTgl) {
     aiasTgl.addEventListener("change", () => {
+      syncCcToggle();
       renderText();
       saveLocal();
     });
   }
-  const ccTgl = $("#toggleCc");
   if (ccTgl) {
     ccTgl.addEventListener("change", () => {
       renderText();
@@ -204,6 +210,7 @@ function openPromptPreview(promptText) {
   if (stageSel && prev.stage) stageSel.value = prev.stage;
   if (aiasTgl && typeof prev.aias === "boolean") aiasTgl.checked = prev.aias;
   if (ccTgl && typeof prev.markCC === "boolean") ccTgl.checked = prev.markCC;
+  syncCcToggle();
 
   if (subjSel?.value) {
     await setSubject(subjSel.value, setStatus);
