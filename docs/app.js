@@ -3,211 +3,47 @@
 "use strict";
 
 const API_BASE = "https://api.skolverket.se/syllabus/v1";
+const PROXY_URL = "https://corsproxy.io/?";
 
-//
-// AIAS-lexikon (allmän version för grundskolans kursplaner)
-// Ordningen är viktig: fraser först, sedan enskilda ord/böjningar.
-// ---------------------------------------------------------
-// AIAS – Masterlist i app.js
-// ---------------------------------------------------------
+import { getLocalSubjectsFallback } from "./subjects/fallback.js";
+import { AIAS_SV } from "./lexicons/aias-sv.js";
+import { AIAS_EN } from "./lexicons/aias-en.js";
+import { AIAS_MA } from "./lexicons/aias-ma.js";
+import { AIAS_IDR } from "./lexicons/aias-idr.js";
+import { AIAS_MUS } from "./lexicons/aias-mus.js";
+import { AIAS_SLJ } from "./lexicons/aias-slj.js";
+import { AIAS_BILD } from "./lexicons/aias-bild.js";
+import { AIAS } from "./lexicons/aias-base.js";
 
-// Fallback (för alla ämnen som inte har speciallista)
-const AIAS = {
-  FORBJUDET: {
-    icon: "⛔",
-    words: [
-      "enkla resonemang", "i huvudsak fungerande", "enkla samband",
-      "enkla","enkel","enkelt",
-      "i huvudsak","delvis","någon mån",
-      "översiktligt","översiktliga","grundläggande",
-      "exempel på","något exempel","några exempel",
-      "återge","namnge","definiera","memorera",
-      "ljudning","ljudningsstrategi"
-    ]
-  },
-  TILLATET: {
-    icon: "✅",
-    words: [
-      "utvecklade resonemang","relativt välgrundade","förhållandevis komplexa samband",
-      "beskriva","jämföra","resonera","förklara",
-      "huvudsakligt","detaljer","väsentliga","väsentlig",
-      "tydligt","sammanhängande","relativt","förhållandevis",
-      "fungerande","goda","goda kunskaper",
-      "centrala","särskilt centrala","lättillgängliga","lättillgängligt",
-      "kommunicera","kommunikation","tolka","hantera","hantering",
-      "delta","deltar","träna","träning","samarbeta","samverka",
-      "genomföra","genomför","använda","använder",
-      "spela","sjunga","lyssna"
-    ]
-  },
-  FORVANTAT: {
-    icon: "📌",
-    words: [
-      "dra slutsatser","ur olika perspektiv","ståndpunkter och argument",
-      "demokratins möjligheter och utmaningar",
-      "analysera","värdera","diskutera","reflektera","reflektion",
-      "utvecklat","utvecklade","variation","varierat","flyt",
-      "anpassat","anpassning","kontinuitet","förändring",
-      "improvisera","gestalta","gestaltningsförmåga",
-      "skapa","skapande","utforma","utformande",
-      "konstruera","designa","undersöka","observera","dokumentera",
-      "utforska","experimentera","planera","strategi","strategier"
-    ]
-  },
-  INTEGRERAT: {
-    icon: "🔗",
-    words: [
-      "välutvecklade resonemang","för den framåt","väl fungerande","källkritiska argument",
-      "kritiskt granska","problematisera","nyansera",
-      "välgrundat","välgrundade","nyanserat","välutvecklat","konstruktivt",
-      "mycket goda","mycket goda kunskaper",
-      "helhet","trovärdighet","relevans",
-      "komponera","arrangera","utvärdera","förfina","fördjupa",
-      "rolltolkning","gestaltningsdjup"
-    ]
-  }
-};
-
-// ---------------------------------------------------------
-// Svenska
-// ---------------------------------------------------------
-const AIAS_SV = {
-  FORBJUDET: {
-    icon: "⛔",
-    words: [
-      "enkla resonemang","i huvudsak fungerande","delvis fungerande",
-      "grundläggande läsförståelse","på ett enkelt sätt","någon mån",
-      "enkel text","enkla texter","enkla instruktioner",
-      "namnge","återge","definiera","ljudningsstrategi",
-      "ljudning","memorera", "elevnära texter",
-      "vanligt förekommande ord", "vanligt förekommande texter", "stavning av vanligt förekommande ord",
-      "stor bokstav","punkt","frågetecken"
-
-        
-    ]
-  },
-  TILLATET: {
-    icon: "✅",
-    words: [
-      "utvecklade resonemang","tydligt framträdande innehåll","huvudsakligt innehåll",
-      "detaljer","väsentliga","relativt tydligt","relativt sammanhängande",
-      "fungerande","goda kunskaper","kommunicera","kommunikation","använda","använder"
-    ]
-  },
-  FORVANTAT: {
-    icon: "📌",
-    words: [
-      "dra slutsatser","flyt","utvecklat språk",
-      "reflektera","reflektion","diskutera","analysera","värdera",
-      "strategier för läsning","varierat språk","variation","varierat"
-    ]
-  },
-  INTEGRERAT: {
-    icon: "🔗",
-    words: [
-      "välutvecklade resonemang","nyanserat språk",
-      "väl fungerande","väl underbyggda argument","välutvecklat sätt"
-    ]
-  }
-};
-
-// ---------------------------------------------------------
-// Matematik
-// ---------------------------------------------------------
-const AIAS_MA = {
-  FORBJUDET: {
-    icon: "⛔",
-    words: [
-      "enkla matematiska modeller","enkla matematiska argument","enkla problem",
-      "i huvudsak fungerande","delvis fungerande","på ett enkelt sätt",
-      "tillfredsställande säkerhet","grundläggande kunskaper"
-    ]
-  },
-  TILLATET: {
-    icon: "✅",
-    words: [
-      "ändamålsenliga metoder","goda kunskaper","god säkerhet",
-      "relativt komplexa problem","relativt väl underbyggda argument","relativt välgrundade"
-    ]
-  },
-  FORVANTAT: {
-    icon: "📌",
-    words: [
-      "strategier på ett utvecklat sätt","värderar strategier",
-      "utvecklat resonemang","dra slutsatser","reflektera","diskutera"
-    ]
-  },
-  INTEGRERAT: {
-    icon: "🔗",
-    words: [
-      "mycket goda kunskaper","mycket god säkerhet",
-      "väl underbyggda argument","välutvecklat sätt",
-      "väl fungerande","välutvecklade resonemang"
-    ]
-  }
-};
-
-// ---------------------------------------------------------
-// Engelska
-// ---------------------------------------------------------
-const AIAS_EN = {
-  FORBJUDET: {
-    icon: "⛔",
-    words: [
-      "det mest väsentliga","enkelt språk i lugnt tempo","enkelt språk",
-      "enkla texter","enkel information","på ett enkelt sätt",
-      "i någon mån underlättar","i någon mån","översiktligt","grundläggande"
-    ]
-  },
-  TILLATET: {
-    icon: "✅",
-    words: [
-      "huvudsakligt innehåll","relativt tydligt och sammanhängande",
-      "relativt tydligt","relativt sammanhängande",
-      "strategier som underlättar",
-      "utvecklade resonemang","relativt välgrundade","förhållandevis komplexa samband",
-      "detaljer","väsentliga","tydligt","sammanhängande",
-      "använda","använder","kommunicera","kommunikation","tolka"
-    ]
-  },
-  FORVANTAT: {
-    icon: "📌",
-    words: [
-      "på ett utvecklat sätt","dra slutsatser",
-      "diskutera","värdera","reflektera","reflektion"
-    ]
-  },
-  INTEGRERAT: {
-    icon: "🔗",
-    words: [
-      "välutvecklat sätt","väl underbyggda","väl fungerande","välutvecklade resonemang"
-    ]
-  }
-};
-
-// ---------------------------------------------------------
-// Lägg in fler ämneslistor här…
-// t.ex. AIAS_BIO, AIAS_FYS, AIAS_KEM, AIAS_BIL, AIAS_MUS, AIAS_SLJ, AIAS_IDR, AIAS_HKK, AIAS_REL, AIAS_SAM, AIAS_GEO, AIAS_TSP
-// ---------------------------------------------------------
-
-// ---------------------------------------------------------
-// Välj rätt lista baserat på subjectId eller title
-// ---------------------------------------------------------
 function getAIAS(subjectIdOrName) {
   const s = String(subjectIdOrName || "").toUpperCase();
-
+  let base;
   // Matcha både namn och ämneskoder
-  if (s.includes("MATEMATIK") || s.startsWith("GRGRMAT")) return AIAS_MA;
-  if (s.includes("ENGELSKA") || s.startsWith("GRGRENG")) return AIAS_EN;
-  if (
+  if (s.includes("MATEMATIK") || s.startsWith("GRGRMAT")) base = AIAS_MA;
+  else if (s.includes("ENGELSKA") || s.startsWith("GRGRENG")) base = AIAS_EN;
+  else if (s.includes("IDROTT") || s.startsWith("GRGRIDR")) base = AIAS_IDR;
+  else if (s.includes("MUSIK") || s.startsWith("GRGRMUS")) base = AIAS_MUS;
+  else if (s.includes("SLÖJD") || s.startsWith("GRGRSLJ")) base = AIAS_SLJ;
+  else if (s.includes("BILD") || s.startsWith("GRGRBIL")) base = AIAS_BILD; // ← Ny rad
+  else if (
     s.includes("SVENSKA") ||
     s.startsWith("GRGRSVE") || // Svenska
     s.startsWith("GRGRSVA")    // Svenska som andraspråk
   )
-    return AIAS_SV;
+    base = AIAS_SV;
+  else base = AIAS; // fallback
 
-  return AIAS; // fallback
+  const normalized = {};
+  for (const key of AIAS_ORDER) {
+    const cat = base[key] || {};
+    normalized[key] = {
+      ...cat,
+      words: Array.isArray(cat.words) ? cat.words : [],
+    };
+  }
+  return normalized;
 }
+
 
 
 // -------------------------------------------------------------
@@ -243,18 +79,40 @@ function loadLocal() {
   }
 }
 
+async function fetchWithTimeout(url, options = {}, timeout = 8000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(id);
+  }
+}
+
 // -------------------------------------------------------------
 // Nätverk: API med proxy-fallback
 async function fetchApi(url) {
   try {
-    const res = await fetch(url, { mode: "cors" });
+    const res = await fetchWithTimeout(url, { mode: "cors" });
     if (!res.ok) throw new Error("HTTP " + res.status);
     return { res, viaProxy: false };
   } catch (e) {
-    const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-    const res = await fetch(proxy);
+    const proxy = `${PROXY_URL}${encodeURIComponent(url)}`;
+    const res = await fetchWithTimeout(proxy);
     if (!res.ok) throw new Error("Proxy HTTP " + res.status);
     return { res, viaProxy: true };
+  }
+}
+
+async function checkProxy() {
+  try {
+    const testUrl = `${API_BASE}/subjects?limit=1`;
+    const proxy = `${PROXY_URL}${encodeURIComponent(testUrl)}`;
+    const res = await fetchWithTimeout(proxy, {}, 5000);
+    if (!res.ok) throw new Error("Proxy HTTP " + res.status);
+    console.log("Proxy OK");
+  } catch (e) {
+    console.warn("Proxy check failed", e);
   }
 }
 
@@ -305,34 +163,6 @@ async function loadSubjects() {
   }
 }
 
-// Full fallback-lista (kod → namn) för grundskolans ämnen
-function getLocalSubjectsFallback() {
-  const S = [
-    ["GRGRBIL01", "Bild"],
-    ["GRGRBIO01", "Biologi"],
-    ["GRGRDAN01", "Dans"],
-    ["GRGRENG01", "Engelska"],
-    ["GRGRFYS01", "Fysik"],
-    ["GRGRGEO01", "Geografi"],
-    ["GRGRHKK01", "Hem- och konsumentkunskap"],
-    ["GRGRHIS01", "Historia"],
-    ["GRGRIDR01", "Idrott och hälsa"],
-    ["GRGRJUD01", "Judiska studier"],
-    ["GRGRKEM01", "Kemi"],
-    ["GRGRMAT01", "Matematik"],
-    // Moderna språk/Modersmål kräver språkkoder → utelämnas i fallback
-    ["GRGRMUS01", "Musik"],
-    ["GRGRREL01", "Religionskunskap"],
-    ["GRGRSAM01", "Samhällskunskap"],
-    ["GRGRSLJ01", "Slöjd"],
-    ["GRGRSVE01", "Svenska"],
-    ["GRGRSVA01", "Svenska som andraspråk"],
-    ["GRGRTSP01", "Teckenspråk för hörande"],
-    ["GRGRTEK01", "Teknik"],
-    ["GRSMSMI01", "Samiska"],
-  ];
-  return S.map(([id, name]) => ({ id, name }));
-}
 
 // -------------------------------------------------------------
 // Hämta kursplan-detaljer för valt ämne
@@ -470,7 +300,14 @@ function escapeRegExpLite(s) {
 function buildCategoryRegex(aias) {
   const rx = {};
   for (const key of AIAS_ORDER) {
-    const list = aias[key].words
+    const words = Array.isArray(aias[key]?.words)
+      ? aias[key].words.filter(Boolean)
+      : [];
+    if (!words.length) {
+      rx[key] = null;
+      continue;
+    }
+    const list = words
       .map((w) => escapeRegExpLite(w))
       .map((w) => w.replace(/\s+/g, "(?:\\s+|-)")) // tillåt bindestreck/varierande whitespace
       .map((w) =>
@@ -489,9 +326,14 @@ function scoreSentence(sent, rx) {
   };
   for (const key of AIAS_ORDER) {
     const r = rx[key];
+    if (!r) continue;
     r.lastIndex = 0;
     let m;
     while ((m = r.exec(sent)) !== null) {
+      if (m[0].length === 0) {
+        r.lastIndex += 1;
+        continue;
+      }
       const start = m.index,
         end = r.lastIndex;
       if (negatedAround(sent, start, end)) continue;
@@ -718,6 +560,7 @@ function renderText() {
 
   // Ladda ämnen
   await loadSubjects();
+  checkProxy();
 
   // Återställ tidigare val
   const prev = loadLocal();
