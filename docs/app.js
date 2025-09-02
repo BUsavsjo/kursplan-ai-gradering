@@ -15,12 +15,6 @@ import { AIAS_SLJ } from "./lexicons/aias-slj.js";
 import { AIAS_BILD } from "./lexicons/aias-bild.js";
 import { AIAS } from "./lexicons/aias-base.js";
 
-
-// ---------------------------------------------------------
-// Välj rätt lista baserat på subjectId eller title
-// ---------------------------------------------------------
-import { AIAS_BILD } from "./lexicons/aias-bild.js";
-
 function getAIAS(subjectIdOrName) {
   const s = String(subjectIdOrName || "").toUpperCase();
   let base;
