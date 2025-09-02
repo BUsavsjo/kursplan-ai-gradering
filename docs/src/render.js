@@ -239,12 +239,18 @@ export function renderText() {
   if (!currentSubject) {
     const out = document.querySelector("#mdOut");
     if (out) out.innerHTML = "";
+    const labelEl = document.querySelector("#lexiconLabel");
+    if (labelEl) labelEl.textContent = "";
     return;
   }
   const stage = document.querySelector("#stageSelect")?.value || "4-6";
   const aias = !!document.querySelector("#toggleAias")?.checked;
   const markCC = !!document.querySelector("#toggleCc")?.checked;
+  const activeAIAS = getAIAS(currentSubject);
   const html = sanitizeHtml(buildHtml(currentSubject, stage, { aias, markCC }));
   const out = document.querySelector("#mdOut");
   if (out) out.innerHTML = html;
+  const labelEl = document.querySelector("#lexiconLabel");
+  if (labelEl)
+    labelEl.textContent = `Lexikon: ${activeAIAS.lexiconLabel}`;
 }
