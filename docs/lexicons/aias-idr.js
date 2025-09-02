@@ -10,8 +10,8 @@ export const AIAS_IDR = {
       "något exempel", "viss säkerhet"
     ]
   },
-  TILLATET: {
-    icon: "✅",
+  INTRODUCERA: {
+    icon: "🌱",
     words: [
       "genomföra", "deltar", "delta",
       "träna", "övning", "rörelse",

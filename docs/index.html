@@ -12,6 +12,8 @@
       <div class="row">
         <label>Ämne</label>
         <select id="subjectSelect"></select>
+        <span id="subjectSource" class="tiny muted"></span>
+        <span id="lexiconLabel" class="tiny muted"></span>
       </div>
       <div class="row">
         <label>Stadie</label>
@@ -26,16 +28,16 @@
       <span id="status" class="muted"></span>
     </div>
     <div class="row" style="margin-top:8px">
-      <span class="badge">⛔ Förbjudet</span>
-      <span class="badge">✅ Tillåtet</span>
+      <span class="badge">⛔ Begränsat</span>
+      <span class="badge">🌱 Introducera</span>
       <span class="badge">📌 Förväntat</span>
       <span class="badge">🔗 Integrerat</span>
     </div>
     <div class="ai-hints card" aria-label="AI-stöd per nivå" style="margin-top:10px">
       <h3>AI-stöd (pedagogens kompass)</h3>
       <ul class="ai-help">
-        <li>⛔ <strong>Förbjudet</strong>: Fokus på baskunskaper och ämnesspråk. <em>Introducera inte AI som verktyg ännu.</em></li>
-        <li>✅ <strong>Tillåtet</strong>: Introducera AI i små steg för <em>struktur, disposition och exempel</em>. Undvik färdiga svar – kräv <em>omformulering med egna ord</em>.</li>
+        <li>⛔ <strong>Begränsat</strong>: Fokus på baskunskaper och ämnesspråk. <em>Introducera inte AI som verktyg ännu.</em></li>
+        <li>🌱 <strong>Introducera</strong>: Introducera AI i små steg för <em>struktur, disposition och exempel</em>. Undvik färdiga svar – kräv <em>omformulering med egna ord</em>.</li>
         <li>📌 <strong>Förväntat</strong>: Använd AI som <em>sparringpartner</em> för att få <em>perspektiv, argument och jämförelser</em>. Eleven ska <em>välja, motivera och dra slutsatser</em>.</li>
         <li>🔗 <strong>Integrerat</strong>: Använd AI för <em>källkritik och fördjupning</em>: jämför källor, be om motargument, kontrollera bias och <em>dokumentera granskningssteg</em>.</li>
       </ul>
@@ -60,7 +62,7 @@
 
   <footer>
     <p class="muted">
-      ⚖️ Disclaimer: Symbolerna (⛔/✅/📌/🔗) är pedagogiska förslag baserade på kursplanens formuleringar (AIAS).
+      ⚖️ Disclaimer: Symbolerna (⛔/🌱/📌/🔗) är pedagogiska förslag baserade på kursplanens formuleringar (AIAS).
       De ersätter inte lärarens professionella tolkning. Verktyget behandlar inga personuppgifter och sparar endast lokala
       inställningar i webbläsaren. Användning av AI i undervisningen ska ske enligt skolans policy och gällande lagstiftning.
     </p>
@@ -72,8 +74,8 @@
         kunskapskraven med hjälp av fyra nivåer:
       </p>
       <ul>
-        <li>⛔ <em>Förbjudet</em>: baskunskaper, AI bör inte introduceras.</li>
-        <li>✅ <em>Tillåtet</em>: fungerande kunskaper, AI kan stödja struktur och exempel.</li>
+          <li>⛔ <em>Begränsat</em>: baskunskaper, AI bör inte introduceras.</li>
+        <li>🌱 <em>Introducera</em>: fungerande kunskaper, AI kan stödja struktur och exempel.</li>
         <li>📌 <em>Förväntat</em>: analysnivå, AI kan användas för perspektiv och resonemang.</li>
         <li>🔗 <em>Integrerat</em>: avancerad nivå, AI kan bli en kritisk partner och användas för nyansering.</li>
       </ul>
@@ -84,6 +86,6 @@
     </div>
   </footer>
 
-  <script type="module" src="./app.js"></script>
+  <script type="module" src="./src/app.js"></script>
 </body>
 </html>

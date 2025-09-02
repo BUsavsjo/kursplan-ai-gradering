@@ -13,8 +13,8 @@ export const AIAS_BILD = {
       "något exempel", "viss säkerhet"
     ]
   },
-  TILLATET: {
-    icon: "✅",
+  INTRODUCERA: {
+    icon: "🌱",
     words: [
       "beskriva", "förklara", "jämföra",
       "använda bildbegrepp", "använder bildbegrepp",

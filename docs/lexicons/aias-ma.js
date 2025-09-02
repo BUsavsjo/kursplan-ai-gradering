@@ -7,8 +7,8 @@ export const AIAS_MA = {
       "tillfredsställande säkerhet","grundläggande kunskaper"
     ]
   },
-  TILLATET: {
-    icon: "✅",
+  INTRODUCERA: {
+    icon: "🌱",
     words: [
       "ändamålsenliga metoder","goda kunskaper","god säkerhet",
       "relativt komplexa problem","relativt väl underbyggda argument","relativt välgrundade"

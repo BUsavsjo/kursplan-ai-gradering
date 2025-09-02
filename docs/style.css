@@ -184,7 +184,7 @@ button.secondary:hover{background:color-mix(in oklab, var(--accent) 8%, transpar
 
 .sent{display:inline;padding:0 .15em;border-radius:.25rem}
 .sent-forbjudet{background:rgba(220,38,38,.12)}
-.sent-tillatet{background:rgba(234,179,8,.12)}
+.sent-introducera{background:rgba(34,197,94,.12)}
 .sent-forvantat{background:rgba(59,130,246,.12)}
 .sent-integrerat{background:rgba(16,185,129,.12)}
 .sent-neutral{background:transparent}
