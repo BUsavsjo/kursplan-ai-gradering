@@ -68,6 +68,28 @@ export function buildAiasPrompt({ subject, stage, text, levels }) {
 }
 
 
+function openPromptPreview(text) {
+  const w = window.open("", "_blank");
+  if (!w) {
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setStatus("Prompt kopierad ✔");
+        setTimeout(() => setStatus(""), 1500);
+      })
+      .catch(() => {
+        setStatus("Kunde inte visa eller kopiera prompt");
+        setTimeout(() => setStatus(""), 1500);
+      });
+    return;
+  }
+
+  const html = `<!doctype html><html lang="sv"><head><meta charset="utf-8"><title>AIAS-prompt</title><style>body{font-family:system-ui,sans-serif;padding:1em;}textarea{width:100%;height:80vh;}</style></head><body><h1>AIAS-prompt</h1><textarea id="prompt" readonly></textarea><p><button id="copy">Kopiera</button></p><script>const txt=${JSON.stringify(text)};const ta=document.getElementById('prompt');ta.value=txt;document.getElementById('copy').addEventListener('click',()=>navigator.clipboard.writeText(txt));</script></body></html>`;
+  w.document.write(html);
+  w.document.close();
+}
+
+
 
 (function wireExportButtons() {
   const btnDownload = $("#btnDownload");
