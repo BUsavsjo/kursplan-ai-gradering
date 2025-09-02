@@ -19,6 +19,8 @@ import { AIAS } from "./lexicons/aias-base.js";
 // ---------------------------------------------------------
 // Välj rätt lista baserat på subjectId eller title
 // ---------------------------------------------------------
+import { AIAS_BILD } from "./lexicons/aias-bild.js";
+
 function getAIAS(subjectIdOrName) {
   const s = String(subjectIdOrName || "").toUpperCase();
   let base;
@@ -28,6 +30,7 @@ function getAIAS(subjectIdOrName) {
   else if (s.includes("IDROTT") || s.startsWith("GRGRIDR")) base = AIAS_IDR;
   else if (s.includes("MUSIK") || s.startsWith("GRGRMUS")) base = AIAS_MUS;
   else if (s.includes("SLÖJD") || s.startsWith("GRGRSLJ")) base = AIAS_SLJ;
+  else if (s.includes("BILD") || s.startsWith("GRGRBIL")) base = AIAS_BILD; // ← Ny rad
   else if (
     s.includes("SVENSKA") ||
     s.startsWith("GRGRSVE") || // Svenska
@@ -46,6 +49,7 @@ function getAIAS(subjectIdOrName) {
   }
   return normalized;
 }
+
 
 
 // -------------------------------------------------------------
