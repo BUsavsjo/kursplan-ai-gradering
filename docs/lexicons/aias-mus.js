@@ -17,8 +17,8 @@ export const AIAS_MUS = {
       "något exempel"
     ]
   },
-  TILLATET: {
-    icon: "✅",
+  INTRODUCERA: {
+    icon: "🌱",
     words: [
       "beskriva", "resonera", "jämföra", "förklara",
       "använda musikbegrepp", "använder musikbegrepp",

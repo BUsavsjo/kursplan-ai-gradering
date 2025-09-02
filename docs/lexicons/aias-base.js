@@ -11,8 +11,8 @@ export const AIAS = {
       "ljudning","ljudningsstrategi"
     ]
   },
-  TILLATET: {
-    icon: "✅",
+  INTRODUCERA: {
+    icon: "🌱",
     words: [
       "utvecklade resonemang","relativt välgrundade","förhållandevis komplexa samband",
       "beskriva","jämföra","resonera","förklara",

@@ -7,8 +7,8 @@ export const AIAS_EN = {
       "i någon mån underlättar","i någon mån","översiktligt","grundläggande"
     ]
   },
-  TILLATET: {
-    icon: "✅",
+  INTRODUCERA: {
+    icon: "🌱",
     words: [
       "huvudsakligt innehåll","relativt tydligt och sammanhängande",
       "relativt tydligt","relativt sammanhängande",
