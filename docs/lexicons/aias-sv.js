@@ -11,8 +11,8 @@ export const AIAS_SV = {
       "stor bokstav","punkt","frågetecken"
     ]
   },
-  TILLATET: {
-    icon: "✅",
+  INTRODUCERA: {
+    icon: "🌱",
     words: [
       "utvecklade resonemang","tydligt framträdande innehåll","huvudsakligt innehåll",
       "detaljer","väsentliga","relativt tydligt","relativt sammanhängande",

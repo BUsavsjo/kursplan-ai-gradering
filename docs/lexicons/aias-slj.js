@@ -11,8 +11,8 @@ export const AIAS_SLJ = {
       "något exempel", "i viss mån", "viss säkerhet"
     ]
   },
-  TILLATET: {
-    icon: "✅",
+  INTRODUCERA: {
+    icon: "🌱",
     words: [
       "beskriva", "förklara", "jämföra", "resonera",
       "välja material", "välja redskap", "välja metod",

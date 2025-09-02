@@ -9,7 +9,7 @@ import { AIAS_SLJ } from "../lexicons/aias-slj.js";
 import { AIAS_BILD } from "../lexicons/aias-bild.js";
 import { AIAS } from "../lexicons/aias-base.js";
 
-const AIAS_ORDER = ["FORBJUDET", "TILLATET", "FORVANTAT", "INTEGRERAT"];
+const AIAS_ORDER = ["FORBJUDET", "INTRODUCERA", "FORVANTAT", "INTEGRERAT"];
 
 function getAIAS(subject) {
   const s = String(
@@ -65,8 +65,8 @@ function aiasMark(text, enabled = true, onlyCat = null, aiasLex = AIAS) {
   if (!enabled) return text || "";
   let t = String(text || "");
 
-  const CATEGORY_ORDER = ["INTEGRERAT", "FORVANTAT", "TILLATET", "FORBJUDET"];
-  const ICON_RE = /[⛔✅📌🔗]/;
+  const CATEGORY_ORDER = ["INTEGRERAT", "FORVANTAT", "INTRODUCERA", "FORBJUDET"];
+  const ICON_RE = /[⛔🌱📌🔗]/;
 
   function escapeRegExp(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
   const makeRe = (w) => {
@@ -121,7 +121,7 @@ function buildCategoryRegex(aias) {
 function scoreSentence(sent, rx) {
   const score = {
     FORBJUDET: 0,
-    TILLATET: 0,
+    INTRODUCERA: 0,
     FORVANTAT: 0,
     INTEGRERAT: 0,
   };
