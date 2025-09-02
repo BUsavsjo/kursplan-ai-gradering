@@ -68,7 +68,6 @@ export function buildAiasPrompt({ subject, stage, text, levels }) {
 }
 
 
-}
 
 (function wireExportButtons() {
   const btnDownload = $("#btnDownload");
