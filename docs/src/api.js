@@ -75,6 +75,7 @@ function normalizeKR(list) {
 
 export async function loadSubjects(setStatus) {
   setStatus("Hämtar ämnen…");
+  let listType = "Standardlista";
   try {
     const { res, viaProxy } = await fetchApi(`${API_BASE}/subjects`);
     const raw = await res.json();
@@ -98,10 +99,12 @@ export async function loadSubjects(setStatus) {
       throw new Error("Inga giltiga poster (saknar id/name)");
 
     setStatus(viaProxy ? "Ämnen via API (proxy)" : "Ämnen via API");
+    listType = "Standardlista";
   } catch (e) {
     console.warn("loadSubjects fallback:", e);
     setStatus("API misslyckades – visar lokal ämneslista");
     subjectsIndex = getLocalSubjectsFallback();
+    listType = "AIAS ämneslista";
   }
 
   const sel = document.querySelector("#subjectSelect");
@@ -112,6 +115,8 @@ export async function loadSubjects(setStatus) {
   if (!sel.value && subjectsIndex.length) {
     sel.value = subjectsIndex[0].id;
   }
+  const srcEl = document.querySelector("#subjectSource");
+  if (srcEl) srcEl.textContent = listType;
 }
 
 export async function setSubject(subjectId, setStatus) {
