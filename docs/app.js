@@ -12,6 +12,7 @@ import { AIAS_MA } from "./lexicons/aias-ma.js";
 import { AIAS_IDR } from "./lexicons/aias-idr.js";
 import { AIAS_MUS } from "./lexicons/aias-mus.js";
 import { AIAS_SLJ } from "./lexicons/aias-slj.js";
+import { AIAS_BILD } from "./lexicons/aias-bild.js";
 import { AIAS } from "./lexicons/aias-base.js";
 
 
