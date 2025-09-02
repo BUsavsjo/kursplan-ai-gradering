@@ -32,6 +32,10 @@ export const AIAS_BILD = {
       "relativt god säkerhet", "anpassa väl", "ge exempel"
     ]
   },
+  BEARBETA: {
+    icon: "✏️",
+    words: ["bearbeta","redigera","förtydliga","omformulera","förbättra"]
+  },
   FORVANTAT: {
     icon: "📌",
     words: [

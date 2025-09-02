@@ -11,23 +11,24 @@ function setStatus(msg) {
   const el = $("#status");
   if (el) el.textContent = msg || "";
 }
-
-function extractAiasLevels(text) {
+export function extractAiasLevels(text = "") {
   const levels = new Set();
-  if (/(⛔|Begränsat|Förbjudet)/i.test(text)) levels.add("Begränsat");
-  if (/(🌱|Introducera)/i.test(text)) levels.add("Introducera");
-  if (/(📌|Förväntat)/i.test(text)) levels.add("Förväntat");
-  if (/(🔗|Integrerat)/i.test(text)) levels.add("Integrerat");
+  if (/⛔|begränsat/i.test(text)) levels.add("Begränsat");
+  if (/🌱|introducera/i.test(text)) levels.add("Introducera");
+  if (/✏️|bearbeta/i.test(text)) levels.add("Bearbeta");
+  if (/📌|förväntat/i.test(text)) levels.add("Förväntat");
+  if (/🔗|integrerat/i.test(text)) levels.add("Integrerat");
   return levels;
 }
 
-function buildAiasPrompt({ subject, stage, text, levels }) {
+export function buildAiasPrompt({ subject, stage, text, levels }) {
   const intro =
     "Du är en pedagogisk AI-assistent. Använd AIAS för att stödja undervisningen.";
   const excerptRaw = text.trim().slice(0, 400);
   const excerpt = excerptRaw.replace(/\s+/g, " ");
   const ellipsis = text.trim().length > 400 ? "…" : "";
   let prompt = `# AIAS-prompt\n${intro}\nÄmne: ${subject}\nStadie: ${stage}\nUtdrag: ${excerpt}${ellipsis}\n`;
+
   const info = {
     Begränsat: {
       icon: "⛔",
@@ -38,6 +39,11 @@ function buildAiasPrompt({ subject, stage, text, levels }) {
       icon: "🌱",
       desc:
         "Använd AI för form/struktur/disposition och exempel. Kräv omformulering med egna ord. Lägg en mini-exit-ticket (3 frågor) utan AI.",
+    },
+    Bearbeta: {
+      icon: "✏️",
+      desc:
+        "AI för språkförbättring, tydlighet, struktur och redigering. Eleven ansvarar för innehållet men får hjälp med presentationen.",
     },
     Förväntat: {
       icon: "📌",
@@ -50,7 +56,8 @@ function buildAiasPrompt({ subject, stage, text, levels }) {
         "AI för källkritik och fördjupning: källjämförelse, motargument, bias-kontroll. Kräv dokumenterade granskningssteg och elevens transparens kring AI-användning.",
     },
   };
-  const order = ["Begränsat", "Introducera", "Förväntat", "Integrerat"];
+
+  const order = ["Begränsat", "Introducera", "Bearbeta", "Förväntat", "Integrerat"];
   for (const lvl of order) {
     if (levels.has(lvl)) {
       const { icon, desc } = info[lvl];
@@ -60,31 +67,7 @@ function buildAiasPrompt({ subject, stage, text, levels }) {
   return prompt.trim();
 }
 
-function openPromptPreview(promptText) {
-  const dlg = document.createElement("dialog");
-  const taId = "promptTextArea";
-  dlg.innerHTML = `
-    <form method="dialog" style="min-width:300px">
-      <textarea id="${taId}" style="width:100%;height:300px;">${promptText}</textarea>
-      <div style="margin-top:6px;text-align:right">
-        <button type="button" id="copyPrompt">Kopiera</button>
-        <button>Stäng</button>
-      </div>
-    </form>
-  `;
-  document.body.appendChild(dlg);
-  const ta = dlg.querySelector(`#${taId}`);
-  dlg.querySelector("#copyPrompt")?.addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText(ta.value);
-      setStatus("Prompt kopierad ✔");
-      setTimeout(() => setStatus(""), 1200);
-    } catch {
-      setStatus("Kunde inte kopiera");
-    }
-  });
-  dlg.addEventListener("close", () => dlg.remove());
-  dlg.showModal();
+
 }
 
 (function wireExportButtons() {

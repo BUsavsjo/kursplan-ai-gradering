@@ -24,6 +24,10 @@ export const AIAS_SLJ = {
       "relativt god säkerhet", "anpassa väl", "ge exempel"
     ]
   },
+  BEARBETA: {
+    icon: "✏️",
+    words: ["bearbeta","redigera","förtydliga","omformulera","förbättra"]
+  },
   FORVANTAT: {
     icon: "📌",
     words: [

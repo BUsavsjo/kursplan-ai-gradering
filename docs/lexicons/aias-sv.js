@@ -19,6 +19,10 @@ export const AIAS_SV = {
       "fungerande","goda kunskaper","kommunicera","kommunikation","använda","använder"
     ]
   },
+  BEARBETA: {
+    icon: "✏️",
+    words: ["bearbeta","redigera","förtydliga","omformulera","förbättra"]
+  },
   FORVANTAT: {
     icon: "📌",
     words: [
